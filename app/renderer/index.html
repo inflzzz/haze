@@ -191,7 +191,7 @@
           <div class="janela" data-janela><svg class="onda"></svg></div>
         </div>
         <div class="vu" data-vu></div>
-        <div class="canal-acoes"><button class="tecla p" data-salvar disabled>Salvar</button><button class="tecla p" data-pasta disabled>Pasta</button><button class="tecla p" id="btn-separar-esta" hidden>Separar esta variação</button><button class="tecla p" id="btn-trocar-voz" hidden>Trocar a voz</button></div>
+        <div class="canal-acoes"><button class="tecla p" data-salvar disabled>Salvar</button><button class="tecla p" data-pasta disabled>Pasta</button><button class="tecla p" id="btn-separar-esta" hidden>Separar esta variação</button><button class="tecla p" id="btn-trocar-voz" hidden>Trocar a voz</button><button class="tecla p" id="btn-midi" hidden title="Tira a melodia da voz e os acordes do instrumental num .mid para o FL Studio">Melodia em MIDI</button></div>
       </div>
       <div class="canal" data-canal="voz" id="canal-voz" hidden>
         <div class="canal-cab"><span class="canal-nome">Voz final <span class="vistas" id="voz-vistas"></span><span class="nota" id="voz-modelo"></span></span><span class="tc" data-tc>--:--</span></div>
@@ -270,9 +270,12 @@
       <span class="etq">Gravação da sua voz (5 a 20 segundos, de preferência falando)</span>
       <div class="linha" style="margin-top:6px">
         <input class="campo" id="fl-ref" type="text" readonly style="flex:1">
+        <button class="tecla forte" id="fl-ref-gravar" title="Grava pelo microfone (até 20 segundos)">● Gravar</button>
+        <button class="tecla" id="fl-ref-ouvir" title="Ouvir a gravação escolhida">▶</button>
         <button class="tecla" id="fl-ref-trocar">Trocar…</button>
         <button class="tecla" id="fl-ref-padrao">Usar a padrão</button>
       </div>
+      <p class="texto fraco" id="fl-ref-roteiro" hidden style="margin:10px 0 0"></p>
     </div>
     <div class="chaves" style="margin:14px 0 0">
       <button class="chave" id="fl-converter" role="switch" aria-checked="false"><i></i>Converter para a voz do meu modelo do Applio</button>
@@ -322,11 +325,24 @@
 
 <!-- ============================ INSTALAR ============================ -->
 <main id="tab-instalar" class="tela coluna" hidden>
+<div class="inst-grade">
+<div class="inst-esq">
   <section class="modulo">
     <div class="mod-cab"><span class="etq">Sua placa de vídeo</span></div>
     <div class="inst-placa"><span class="lamp" id="inst-lamp"></span><div><div id="inst-placa-nome">Procurando…</div><div class="d-det" id="inst-placa-modo"></div></div></div>
     <p class="texto fraco" style="margin:10px 0 0">Cada função baixa só o que precisa, na versão certa pra sua placa. Se a placa não funcionar com alguma IA, o app usa o processador: fica mais lento, mas funciona.</p>
   </section>
+  <section class="modulo">
+    <div class="mod-cab"><span class="etq">Versão do app</span>
+      <span class="linha"><button class="tecla p" id="att-procurar">Procurar atualização</button><button class="tecla p forte" id="att-instalar" hidden>Atualizar agora</button></span>
+    </div>
+    <p class="texto" id="att-texto" style="margin:0">…</p>
+  </section>
+  <section class="modulo">
+    <div class="mod-cab"><span class="etq">Deu problema?</span><button class="tecla p" data-relatorio>Copiar relatório de erro</button></div>
+    <p class="texto fraco" style="margin:0">Copia a placa, o que está instalado e os últimos erros. Cole numa mensagem para quem vai te ajudar.</p>
+  </section>
+</div>
   <section class="modulo">
     <div class="mod-cab"><span class="etq">Funções</span>
       <span class="linha"><button class="tecla p" id="inst-tudo">Instalar tudo que falta</button><button class="tecla p" id="inst-cancelar" hidden>Cancelar</button></span>
@@ -334,13 +350,14 @@
     <div id="inst-lista"></div>
     <pre class="registro inst-registro" id="inst-registro" hidden></pre>
   </section>
+</div>
 </main>
 
 <!-- ============================ DIAGNÓSTICO ============================ -->
 <main id="tab-diag" class="tela coluna" hidden>
   <section class="modulo">
     <div class="mod-cab"><span class="etq">Diagnóstico</span>
-      <span class="linha"><button class="tecla p" id="btn-diag">Verificar de novo</button><button class="tecla p" id="btn-ytdlp">Atualizar yt-dlp</button></span>
+      <span class="linha"><button class="tecla p" id="btn-diag">Verificar de novo</button><button class="tecla p" id="btn-ytdlp">Atualizar yt-dlp</button><button class="tecla p" data-relatorio>Copiar relatório de erro</button></span>
     </div>
     <div id="diag-saida"></div>
     <pre class="registro" id="ytdlp-saida" hidden></pre>

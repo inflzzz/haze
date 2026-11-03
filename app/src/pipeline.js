@@ -1589,7 +1589,32 @@ async function separateOnly(file, onEvent, ctl = {}) {
   return { dir, stems };
 }
 
+// ---------- melodia e acordes em MIDI (src/midi.py, no sep-env) ----------
+// Da voz separada sai a melodia; do instrumental, o andamento e os acordes. O .mid fica na pasta da música.
+async function midi(dir, n, onEvent, ctl = {}) {
+  const job = new Job(dir, onEvent);
+  ctl.job = job;
+  const meta = readMeta(dir);
+  const st = (meta.stemsList && meta.stemsList[n]) || (n === 0 ? meta.stems : null);
+  if (!st || !st.vocals) throw new Error('Separe a voz desta gravação antes de tirar o MIDI.');
+  need(paths.sepPython, 'o separador de vocal (sep-env)');
+  const saida = path.join(dir, `${limpo(meta.title || 'música', 70)} (melodia e acordes).mid`);
+  let acordes = '';
+  job.emit('midi', 10, 'lendo a melodia e os acordes…');
+  await run(job, paths.sepPython, ['-I', paths.midiScript, '--vocal', st.vocals,
+    ...(st.instrumental ? ['--instrumental', st.instrumental] : []), '--saida', saida], {
+    onLine: (l) => {
+      if (l.startsWith('ACORDES ')) acordes = l.slice(8).trim();
+      else if (/^lendo/.test(l)) job.emit('midi', 50, l);
+    },
+  });
+  if (!fs.existsSync(saida)) throw new Error('O MIDI não foi gerado.');
+  job.emit('midi', 100, 'pronto');
+  return { file: saida, acordes };
+}
+
 module.exports = {
+  midi,
   analyze, generate, planejar, compor, continuar, separateTake, trocarVoz, reemendar, amostra, soVoz, falar, separateOnly,
   karaoke, karaokeLetra, karaokeMelodia, karaokeTom, saveMeta, readMeta,
   Job, Cancelled, formatLyrics, newJobDir, limpo, indiceSeguro,

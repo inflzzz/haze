@@ -40,6 +40,7 @@ const paths = {
   aoVivoScript: path.join(__dirname, 'aovivo.py'),
   karaokeScript: path.join(__dirname, 'karaoke.py'),
   karaokeAnalise: path.join(__dirname, 'karaoke_analise.py'),
+  midiScript: path.join(__dirname, 'midi.py'),
   ttsPython: path.join(ROOT, 'tts-env', 'Scripts', 'python.exe'),
   falarScript: path.join(__dirname, 'falar.py'),
   // fala com a voz clonada (Chatterbox), em ambiente próprio: precisa de outro torch que o tts-env

@@ -41,6 +41,7 @@ const state = {
   carregada: null,      // gravação mostrada na Saída
   variacao: 0,
   lora: { dir: null, files: [] },
+  midis: {},            // "pasta|variação" -> arquivo .mid já feito
 };
 
 // ---------- utilidades ----------
@@ -70,6 +71,7 @@ function setStatus(texto, falha) {
   s.textContent = texto || '';
   s.title = texto || '';
   s.classList.toggle('falha', !!falha);
+  if (falha && texto) api.erroTela(texto);
 }
 function setRec(titulo, sub, classe) {
   $('rec-titulo').textContent = titulo;
@@ -1720,7 +1722,38 @@ function atualizarSaida() {
   const escolhida = vozEscolhida();
   $('btn-trocar-voz').hidden = !st || !escolhida;
   if (escolhida) $('btn-trocar-voz').textContent = `Trocar a voz (${escolhida.nome})`;
+  const midiFeito = state.midis[m.dir + '|' + v];
+  $('btn-midi').hidden = !st || !st.vocals;
+  $('btn-midi').textContent = midiFeito ? 'MIDI pronto (arraste)' : 'Melodia em MIDI';
+  $('btn-midi').classList.toggle('extra', !!midiFeito);
+  $('btn-midi').draggable = !!midiFeito;
 }
+
+// ---------- melodia e acordes em MIDI ----------
+$('btn-midi').addEventListener('dragstart', (e) => {
+  const m = state.carregada;
+  const f = m && state.midis[m.dir + '|' + state.variacao];
+  e.preventDefault();
+  if (f) api.arrastar(f);
+});
+$('btn-midi').addEventListener('click', async () => {
+  if (state.rodando) return setStatus('Espere o trabalho atual terminar.', true);
+  const m = state.carregada;
+  if (!m) return;
+  const chave = m.dir + '|' + state.variacao;
+  if (state.midis[chave]) return api.mostrarNaPasta(state.midis[chave]);
+  state.modo = 'mesa';
+  setRodando(true);
+  setStatus('Lendo a melodia e os acordes… (leva cerca de meio minuto)');
+  const r = await api.midi({ dir: m.dir, index: state.variacao });
+  setRodando(false);
+  atualizarMesa();
+  if (!r.ok) return setStatus(r.error, true);
+  state.midis[chave] = r.data.file;
+  atualizarSaida();
+  const ac = r.data.acordes ? r.data.acordes.split(' ') : [];
+  setStatus('MIDI pronto: melodia e acordes' + (ac.length ? ' (começa com ' + ac.slice(0, 6).join(' – ') + ')' : '') + '. Arraste o botão para o FL Studio.');
+});
 // ---------- editor de frases: o tom de cada frase de uma voz ----------
 // Cada frase mostra as opções. Clicar numa opção toca a frase nela (do arquivo inteiro que já está na
 // pasta) e deixa escolhida; "Aplicar" refaz só a emenda.
@@ -2012,7 +2045,7 @@ function atualizarFala() {
   $('fl-emocao-linha').hidden = !clone;
   const ref = state.config && state.config.falaReferencia;
   $('fl-ref').value = ref ? nomeArquivo(ref)
-    : state.temReferenciaPadrao ? 'padrão: a gravação que veio com o app' : 'nenhuma: clique em Trocar… e escolha uma gravação sua';
+    : state.temReferenciaPadrao ? 'padrão: a gravação que veio com o app' : 'nenhuma: clique em Gravar (ou Trocar… para escolher um arquivo)';
   $('fl-ref-padrao').disabled = !ref;
 }
 async function prepararFala() {
@@ -2051,6 +2084,63 @@ $('fl-ref-trocar').addEventListener('click', async () => {
   atualizarFala();
 });
 $('fl-ref-padrao').addEventListener('click', () => { guardarFala({ falaReferencia: null }); atualizarFala(); });
+
+// Gravar a referência direto no microfone: até 20 s, sem os filtros do navegador (eles mudam o timbre).
+const ROTEIRO = {
+  en: 'Leia em voz alta, do seu jeito normal: "Hey, what\'s up everyone? Today I want to show you something I\'ve been working on for a while. It\'s not perfect yet, but honestly, I think you\'re going to love it. Let me know what you think!"',
+  pt: 'Leia em voz alta, do seu jeito normal: "E aí, pessoal, tudo certo? Hoje eu quero mostrar uma coisa que eu tô fazendo faz um tempo. Ainda não tá perfeita, mas sinceramente, acho que vocês vão curtir. Me falem o que acharam!"',
+};
+const gravacao = { rec: null, partes: [], inicio: 0, timer: null };
+function pararGravacaoRef() {
+  if (gravacao.rec && gravacao.rec.state !== 'inactive') gravacao.rec.stop();
+}
+$('fl-ref-gravar').addEventListener('click', async () => {
+  if (gravacao.rec && gravacao.rec.state === 'recording') return pararGravacaoRef();
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 } });
+  } catch (e) {
+    return setStatus('Não consegui usar o microfone: ' + e.message + '. Confira em Configurações do Windows > Privacidade > Microfone.', true);
+  }
+  gravacao.partes = [];
+  gravacao.rec = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+  gravacao.rec.ondataavailable = (e) => { if (e.data.size) gravacao.partes.push(e.data); };
+  gravacao.rec.onstop = async () => {
+    clearInterval(gravacao.timer);
+    stream.getTracks().forEach((t) => t.stop());
+    $('fl-ref-gravar').textContent = '● Gravar';
+    $('fl-ref-roteiro').hidden = true;
+    const seg = (Date.now() - gravacao.inicio) / 1000;
+    if (seg < 4) return setStatus('Gravação curta demais: fale pelo menos 5 segundos.', true);
+    setStatus('Guardando a gravação…');
+    const dados = await new Blob(gravacao.partes, { type: 'audio/webm' }).arrayBuffer();
+    const r = await api.salvarGravacao(dados);
+    if (!r.ok) return setStatus('Não consegui guardar a gravação: ' + r.error, true);
+    guardarFala({ falaReferencia: r.file });
+    atualizarFala();
+    setStatus(`Gravação de ${Math.round(seg)} s guardada. Ela passa a ser a sua voz na fala clonada.`);
+  };
+  const lingua = $('fl-lingua').value === 'pt' ? 'pt' : 'en';
+  $('fl-ref-roteiro').textContent = ROTEIRO[lingua];
+  $('fl-ref-roteiro').hidden = false;
+  gravacao.inicio = Date.now();
+  gravacao.rec.start(250);
+  const tique = () => {
+    const s = Math.floor((Date.now() - gravacao.inicio) / 1000);
+    $('fl-ref-gravar').textContent = `■ Parar (${s}s)`;
+    if (s >= 20) pararGravacaoRef();
+  };
+  tique();
+  gravacao.timer = setInterval(tique, 250);
+});
+const ouvirRef = new Audio();
+$('fl-ref-ouvir').addEventListener('click', () => {
+  const ref = (state.config && state.config.falaReferencia) || (state.temReferenciaPadrao ? state.referenciaPadrao : null);
+  if (!ref) return setStatus('Ainda não tem gravação: clique em Gravar.', true);
+  if (!ouvirRef.paused) { ouvirRef.pause(); return; }
+  ouvirRef.src = fileUrl(ref);
+  ouvirRef.play();
+});
 $('fl-converter').addEventListener('click', () => setTimeout(atualizarFala, 0));
 $('btn-falar-parar').addEventListener('click', () => api.cancelar());
 $('btn-falar').addEventListener('click', async () => {
@@ -2164,6 +2254,44 @@ $('inst-tudo').addEventListener('click', () => {
   rodarInstalacao(faltam.length ? faltam : inst.itens.filter((c) => !c.instalado).map((c) => c.id));
 });
 $('inst-cancelar').addEventListener('click', () => api.componentesCancelar());
+
+// ---------- atualização ----------
+async function verificarAtualizacao(avisar) {
+  $('att-texto').textContent = 'Procurando…';
+  const r = await api.atualizacaoVerificar();
+  $('att-instalar').hidden = true;
+  if (!r.ok) { $('att-texto').textContent = `Versão ${r.atual}. Não consegui ver se tem nova (${r.error}).`; return; }
+  if (!r.temNova) { $('att-texto').textContent = `Versão ${r.atual}: é a mais nova.`; return; }
+  if (r.desenvolvimento) {
+    $('att-texto').textContent = `Versão ${r.atual}. Saiu a ${r.nova}, mas esta é a cópia de desenvolvimento: atualize pelo Git.`;
+    return;
+  }
+  $('att-texto').textContent = `Versão ${r.atual}. Saiu a ${r.nova}` + (r.tamanho ? ` (${Math.round(r.tamanho / 1048576)} MB)` : '')
+    + '. As IAs instaladas, os ajustes e as músicas continuam como estão.';
+  $('att-instalar').hidden = !r.url;
+  if (avisar) setStatus(`Saiu a versão ${r.nova} do Haze: atualize na aba Instalar.`);
+}
+$('att-procurar').addEventListener('click', () => verificarAtualizacao(false));
+$('att-instalar').addEventListener('click', async () => {
+  if (state.rodando) return setStatus('Espere o trabalho atual terminar.', true);
+  $('att-instalar').disabled = true;
+  $('att-procurar').disabled = true;
+  const r = await api.atualizacaoInstalar();
+  if (!r.ok) {
+    $('att-instalar').disabled = false;
+    $('att-procurar').disabled = false;
+    $('att-texto').textContent = 'Não deu para atualizar: ' + r.error;
+  }
+});
+api.onAtualizacao((texto) => { $('att-texto').textContent = texto; setStatus(texto); });
+// confere sozinho uns segundos depois de abrir (sem atrapalhar se estiver sem internet)
+setTimeout(() => verificarAtualizacao(true).catch(() => {}), 6000);
+
+// ---------- relatório de erro ----------
+document.querySelectorAll('[data-relatorio]').forEach((b) => b.addEventListener('click', async () => {
+  const r = await api.relatorio();
+  setStatus(r.ok ? 'Relatório copiado. Cole (Ctrl+V) numa mensagem para quem vai te ajudar.' : 'Não consegui montar o relatório.', !r.ok);
+}));
 
 // Primeira vez num PC novo: nada instalado -> abre a aba Instalar.
 async function verificarPrimeiraVez() {
@@ -2387,6 +2515,7 @@ const sementeDe = (id) => (state.seq > 1 ? null : soDigitos(id));
   state.nome = info.nome;
   state.limite = info.limiteSegundos;
   state.temReferenciaPadrao = !!info.temReferenciaPadrao;
+  state.referenciaPadrao = info.referenciaPadrao;
   TEMPO =TEMPOS[info.motor] || TEMPOS.vulkan;
   document.title = info.nome;
   const partes = info.nome.split(' ');

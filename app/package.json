@@ -1,6 +1,6 @@
 {
   "name": "haze",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Haze: música e voz com IA no seu PC (troca de voz, YuE2, fala, karaokê)",
   "main": "main.js",
   "scripts": {

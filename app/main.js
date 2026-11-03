@@ -174,11 +174,82 @@ async function guarded(fn) {
   try {
     return { ok: true, data: await fn(current) };
   } catch (e) {
+    if (!(e instanceof pipeline.Cancelled)) guardarErro('trabalho', e.message);
     return { ok: false, error: e.message, cancelled: e instanceof pipeline.Cancelled };
   } finally {
     current = null;
   }
 }
+
+// ---------- relatório de erro: o que precisa para consertar de longe ----------
+const errosRecentes = [];          // { quando, onde, erro }
+const instalacaoRecente = [];      // últimas linhas da aba Instalar
+function guardarErro(onde, erro) {
+  errosRecentes.push({ quando: new Date().toLocaleString('pt-BR'), onde, erro: String(erro || '').slice(0, 3000) });
+  if (errosRecentes.length > 5) errosRecentes.shift();
+}
+function ultimoLogDeTrabalho() {
+  try {
+    const pastas = fs.readdirSync(paths.outDir, { withFileTypes: true }).filter((d) => d.isDirectory())
+      .map((d) => path.join(paths.outDir, d.name, '_trabalho', 'log.txt')).filter((f) => fs.existsSync(f))
+      .map((f) => ({ f, t: fs.statSync(f).mtimeMs })).sort((a, b) => b.t - a.t);
+    if (!pastas.length) return '';
+    return fs.readFileSync(pastas[0].f, 'utf8').split(/\r?\n/).slice(-40).join('\n');
+  } catch { return ''; }
+}
+async function montarRelatorio() {
+  const os = require('os');
+  const versao = (() => { try { return require('./package.json').version; } catch { return '?'; } })();
+  const est = await componentes.estado(ctxComponentes()).catch(() => null);
+  const linhas = [
+    `=== Relatório do ${APP_NAME} ${versao} (${new Date().toLocaleString('pt-BR')}) ===`,
+    `Windows ${os.release()} · ${os.cpus()[0] ? os.cpus()[0].model.trim() : '?'} · RAM ${Math.round(os.totalmem() / 1073741824)} GB`,
+    `Pasta do app: ${ROOT} · motor de música: ${motor}`,
+  ];
+  if (est) {
+    linhas.push(`Placa: ${est.placa.nome}${est.placa.vramGB ? ` (${est.placa.vramGB} GB)` : ''} → ${est.placa.modo}`);
+    if (est.placa.todas && est.placa.todas.length > 1) linhas.push(`Todas as placas: ${est.placa.todas.join(' | ')}`);
+    linhas.push('', 'Funções:');
+    for (const c of est.itens) linhas.push(`  ${c.instalado ? '[x]' : '[ ]'} ${c.nome}${c.backend ? ' (' + c.backend + ')' : ''}`);
+  }
+  const c = readConfig();
+  linhas.push(`Applio: ${c.applioDir || 'não configurado'}`);
+  if (errosRecentes.length) {
+    linhas.push('', 'Últimos erros:');
+    for (const e of errosRecentes) linhas.push(`--- ${e.quando} (${e.onde})`, e.erro);
+  }
+  if (instalacaoRecente.length) linhas.push('', 'Últimas linhas da instalação:', ...instalacaoRecente.slice(-40));
+  const log = ultimoLogDeTrabalho();
+  if (log) linhas.push('', 'Fim do registro do último trabalho:', log);
+  // o nome do usuário do Windows não precisa ir junto
+  return linhas.join('\n').split(os.homedir()).join('%USERPROFILE%');
+}
+// ---------- atualização pelo GitHub (src/atualizar.js) ----------
+const atualizar = require('./src/atualizar');
+ipcMain.handle('atualizacao-verificar', async () => {
+  try { return { ok: true, ...(await atualizar.verificar()) }; } catch (e) {
+    return { ok: false, atual: atualizar.versaoAtual(), error: e.message };
+  }
+});
+ipcMain.handle('atualizacao-instalar', async () => {
+  if (current) return { ok: false, error: 'Espere o trabalho atual terminar.' };
+  try {
+    const ps = await atualizar.preparar((texto) => send('atualizacao', texto));
+    send('atualizacao', 'fechando para trocar os arquivos… o app abre sozinho de novo');
+    setTimeout(() => { atualizar.rodarDepoisDeFechar(ps); app.quit(); }, 1200);
+    return { ok: true };
+  } catch (e) {
+    guardarErro('atualizar', e.message);
+    return { ok: false, error: e.message };
+  }
+});
+
+ipcMain.handle('relatorio', async () => {
+  const texto = await montarRelatorio();
+  clipboard.writeText(texto);
+  return { ok: true, linhas: texto.split('\n').length };
+});
+ipcMain.on('erro-tela', (_e, texto) => guardarErro('tela', texto));
 const progresso = (ev) => send('progresso', ev);
 
 // ---------- IPC: trabalho ----------
@@ -205,6 +276,7 @@ ipcMain.handle('compor', (_e, opts) => guarded((ctl) => pipeline.compor(opts, pr
 ipcMain.handle('continuar', (_e, opts) => guarded((ctl) => pipeline.continuar(opts, progresso, ctl)));
 ipcMain.handle('trocar-voz', (_e, { dir, index, voz }) =>
   guarded((ctl) => pipeline.trocarVoz(dir, index, voz, progresso, ctl)));
+ipcMain.handle('midi', (_e, { dir, index }) => guarded((ctl) => pipeline.midi(dir, index, progresso, ctl)));
 ipcMain.handle('reemendar', (_e, { dir, index, escolhas, voz, modelo }) =>
   guarded((ctl) => pipeline.reemendar(dir, index, escolhas, voz, progresso, ctl, modelo)));
 
@@ -1012,7 +1084,11 @@ const ctxComponentes = () => ({
 ipcMain.handle('componentes-estado', () => componentes.estado(ctxComponentes()));
 ipcMain.handle('componentes-instalar', async (_e, ids) => {
   try {
-    await componentes.instalar(ids, ctxComponentes(), (ev) => { if (win && !win.isDestroyed()) win.webContents.send('componentes', ev); });
+    await componentes.instalar(ids, ctxComponentes(), (ev) => {
+      if (ev.linha) { instalacaoRecente.push(ev.linha); if (instalacaoRecente.length > 200) instalacaoRecente.shift(); }
+      if (ev.fim === 'erro') guardarErro('instalar ' + ev.id, ev.erro);
+      if (win && !win.isDestroyed()) win.webContents.send('componentes', ev);
+    });
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e.message };
@@ -1029,7 +1105,27 @@ function sh(cmd, args) {
 }
 
 ipcMain.handle('info', () => ({ nome: APP_NAME, limiteSegundos: MAX_SECONDS, pastaSaida: paths.outDir, motor,
-  temReferenciaPadrao: fs.existsSync(models.referenciaPadrao) }));
+  temReferenciaPadrao: fs.existsSync(models.referenciaPadrao), referenciaPadrao: models.referenciaPadrao }));
+
+// Gravação da voz feita na aba Fala: chega em webm (Opus) e vira wav mono 24 kHz, que é o que o Chatterbox lê.
+ipcMain.handle('salvar-gravacao', async (_e, dados) => {
+  try {
+    const pasta = path.join(app.getPath('userData'), 'gravacoes');
+    fs.mkdirSync(pasta, { recursive: true });
+    const d = new Date();
+    const p2 = (n) => String(n).padStart(2, '0');
+    const nome = `minha-voz-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}`;
+    const webm = path.join(pasta, nome + '.webm');
+    const wav = path.join(pasta, nome + '.wav');
+    fs.writeFileSync(webm, Buffer.from(dados));
+    const r = await sh(paths.ffmpeg, ['-v', 'error', '-y', '-i', webm, '-ac', '1', '-ar', '24000', wav]);
+    fs.rmSync(webm, { force: true });
+    if (!r.ok || !fs.existsSync(wav)) return { ok: false, error: r.out.trim().split('\n').pop() || 'o ffmpeg falhou' };
+    return { ok: true, file: wav };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
 
 // VRAM livre agora (MiB), para avisar antes de uma gravação longa.
 ipcMain.handle('vram', async () => {

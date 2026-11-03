@@ -41,7 +41,7 @@ Com o motor **YuE2**, uma IA que compõe e canta:
 ### 🗣️ Fala
 Escreva um texto e ele sai falado.
 
-- **Sua voz clonada**: grave de 10 a 20 segundos e ele fala com a sua voz e o seu jeito (Chatterbox: inglês, português, espanhol, francês, italiano, alemão e japonês)
+- **Sua voz clonada**: clique em **● Gravar**, leia o texto que aparece por 10 a 20 segundos e ele passa a falar com a sua voz e o seu jeito (Chatterbox: inglês, português, espanhol, francês, italiano, alemão e japonês)
 - **Voz pronta**: vozes leves que rodam até sem placa de vídeo (Kokoro)
 - Dá pra passar a fala depois pelo seu modelo de voz
 
@@ -64,6 +64,12 @@ Baixe modelos de voz do Hugging Face colando os links. Organize em pastas, por l
 
 ### ✂️ Separar vocal
 Voz e instrumental de qualquer música, com os mesmos modelos do UVR5 (MDX-Net e Mel-Band RoFormer).
+
+### 🎹 Melodia e acordes em MIDI
+Um clique tira a melodia da voz e os acordes do instrumental num `.mid`, já no andamento da música. Arraste o botão direto pro FL Studio: sai uma faixa pra melodia e outra pros acordes.
+
+### 🔄 Sempre atualizado
+O Haze avisa quando sai uma versão nova e se atualiza com um clique, sem apagar as IAs instaladas, os seus ajustes nem as suas músicas. Deu algum problema? O botão **Copiar relatório de erro** junta a placa, o que está instalado e os últimos erros, pronto pra colar numa mensagem.
 
 ---
 
