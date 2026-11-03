@@ -1,0 +1,457 @@
+/* Mesa de estúdio. Contrato de design: ver DESIGN.md */
+@font-face { font-family: "Barlow"; src: url("fonts/Barlow-Regular.ttf"); font-weight: 400; }
+@font-face { font-family: "Barlow"; src: url("fonts/Barlow-Medium.ttf"); font-weight: 500; }
+@font-face { font-family: "Barlow SC"; src: url("fonts/BarlowSemiCondensed-Medium.ttf"); font-weight: 500; }
+@font-face { font-family: "Barlow SC"; src: url("fonts/BarlowSemiCondensed-SemiBold.ttf"); font-weight: 600; }
+@font-face { font-family: "Chivo Mono"; src: url("fonts/ChivoMono.ttf"); font-weight: 100 900; }
+
+:root {
+  color-scheme: dark;
+  --chassi: #1f1c19;       /* fundo: grafite quente */
+  --painel: #2b2723;       /* módulos */
+  --painel-2: #36312c;     /* teclas */
+  --painel-3: #403a34;     /* tecla acesa / sob o cursor */
+  --sulco: #151311;        /* rebaixos: visores, campos, trilhos */
+  --aresta: #4a433c;       /* quinas iluminadas */
+  --base: #0f0d0c;         /* sombra dura sob as peças */
+  --serigrafia: #e8dec8;   /* letras impressas no equipamento */
+  --aco: #9a9186;          /* texto secundário */
+  --ambar: #f2a93b;        /* lâmpadas, visor, seleção */
+  --vermelho: #d5402f;     /* gravar, erro */
+  --verde: #86c96a;        /* sinal presente, etapa concluída */
+  --rotulo: 600 11px/1 "Barlow SC", sans-serif;
+  --mono: "Chivo Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--chassi); color: var(--serigrafia);
+  font: 400 14px/1.4 "Barlow", sans-serif;
+  display: grid; grid-template-rows: 50px minmax(0, 1fr) 62px;
+  overflow: hidden; user-select: none;
+}
+button, input, textarea, select { font: inherit; color: inherit; }
+input, textarea { user-select: text; }
+:focus-visible { outline: 2px solid var(--ambar); outline-offset: 2px; }
+::selection { background: var(--ambar); color: var(--sulco); }
+* { scrollbar-width: thin; scrollbar-color: var(--aresta) transparent; }
+
+/* etiqueta de equipamento: caixa alta só em rótulos de módulo e teclas, como no painel de um aparelho */
+.etq { font: var(--rotulo); letter-spacing: .12em; text-transform: uppercase; color: var(--aco); }
+.nota { color: var(--ambar); letter-spacing: .06em; margin-left: 6px; }
+.mono { font-family: var(--mono); }
+.texto { margin: 0 0 14px; line-height: 1.5; }
+.fraco { color: var(--aco); font-size: 13px; }
+
+/* cada parte tem sua linha fixa na grade, qualquer que seja a aba visível */
+header { grid-row: 1; }
+.tela { grid-row: 2; }
+footer { grid-row: 3; }
+
+/* ---------- topo ---------- */
+header { display: flex; align-items: center; justify-content: space-between; padding: 0 22px; }
+.marca { font: 600 17px/1 "Barlow SC", sans-serif; letter-spacing: .2em; text-transform: uppercase; }
+.marca b { color: var(--ambar); font-weight: 600; }
+nav { display: flex; gap: 4px; }
+.aba {
+  font: var(--rotulo); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--aco); background: none; border: 0; padding: 9px 12px; border-radius: 3px; cursor: pointer;
+}
+.aba:hover { background: var(--painel); color: var(--serigrafia); }
+.aba.on { color: var(--serigrafia); box-shadow: inset 0 -2px 0 var(--ambar); border-radius: 3px 3px 0 0; }
+
+/* ---------- telas ---------- */
+.tela { min-height: 0; padding: 0 12px; }
+.mesa { display: grid; grid-template-columns: minmax(280px, 318px) minmax(0, 1fr) minmax(340px, 400px); gap: 10px; }
+.coluna { overflow-y: auto; display: flex; justify-content: center; align-items: flex-start; }
+.coluna > .modulo { width: 100%; max-width: 900px; }
+.coluna > .modulo.estreito { max-width: 620px; }
+
+.modulo {
+  background: var(--painel); border-radius: 5px; padding: 16px 18px 18px;
+  border-top: 1px solid var(--aresta); box-shadow: 0 2px 0 var(--base);
+  display: flex; flex-direction: column; min-width: 0; min-height: 0;
+}
+.mod-cab { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; min-height: 16px; }
+
+/* ---------- lâmpadas ---------- */
+.lamp { width: 8px; height: 8px; border-radius: 50%; background: #4a3a22; flex: none; }
+.lamp.on { background: var(--ambar); box-shadow: 0 0 8px rgba(242, 169, 59, .8); }
+.lamp.sinal { background: var(--verde); box-shadow: 0 0 8px rgba(134, 201, 106, .7); }
+.lamp.erro { background: var(--vermelho); box-shadow: 0 0 8px rgba(213, 64, 47, .8); }
+.lamp.pisca { background: var(--ambar); animation: pisca 1.1s ease-in-out infinite; }
+@keyframes pisca { 0%, 100% { box-shadow: 0 0 9px rgba(242, 169, 59, .9); opacity: 1; } 50% { box-shadow: none; opacity: .35; } }
+
+/* ---------- seletor de modo ---------- */
+.modos { display: flex; background: var(--sulco); border-radius: 3px; padding: 3px; gap: 3px; margin-bottom: 12px; box-shadow: inset 0 2px 4px rgba(0, 0, 0, .5); }
+.modo {
+  flex: 1 1 auto; background: none; border: 0; border-radius: 2px; padding: 8px 4px; cursor: pointer;
+  font: var(--rotulo); font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: var(--aco); white-space: nowrap;
+}
+.modo:hover { color: var(--serigrafia); }
+.modo.on { background: var(--painel-3); color: var(--ambar); box-shadow: 0 1px 0 var(--base); }
+/* no modo "só trocar a voz" a parte de regravação fica fora de uso */
+.fora-de-uso { opacity: .28; pointer-events: none; filter: saturate(.4); }
+
+/* ---------- visor ---------- */
+.visor {
+  background: var(--sulco); border-radius: 3px; padding: 14px 14px 12px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .6); border-bottom: 1px solid var(--aresta);
+  color: var(--ambar); font-family: var(--mono);
+}
+.visor .t { font-size: 16px; font-weight: 500; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.visor .a { font-size: 12px; opacity: .7; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.visor .tc { display: flex; justify-content: space-between; margin-top: 14px; font-size: 21px; font-weight: 300; letter-spacing: .04em; }
+.visor .tc small { display: block; font: 600 10px/1 "Barlow SC", sans-serif; letter-spacing: .14em; opacity: .6; margin-bottom: 5px; }
+
+/* ---------- campos e teclas ---------- */
+.rot { display: block; margin: 16px 0 6px; }
+.campo {
+  width: 100%; background: var(--sulco); border: 0; border-bottom: 1px solid var(--aresta);
+  border-radius: 3px; padding: 9px 11px; color: var(--serigrafia);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, .5);
+}
+.campo::placeholder { color: #6f675d; }
+.campo:disabled { opacity: .45; }
+textarea.campo { resize: none; display: block; line-height: 1.45; }
+select.campo { appearance: none; padding-right: 26px; background-image: linear-gradient(45deg, transparent 50%, var(--aco) 50%), linear-gradient(135deg, var(--aco) 50%, transparent 50%); background-position: calc(100% - 14px) 55%, calc(100% - 9px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
+.linha { display: flex; gap: 8px; align-items: center; }
+.linha > .campo { min-width: 0; }
+.linha.entre { justify-content: space-between; }
+.linha.entre.rot { margin: 12px 0 6px; }
+
+.tecla {
+  background: var(--painel-2); border: 0; border-top: 1px solid var(--aresta); border-radius: 3px;
+  box-shadow: 0 2px 0 var(--base); padding: 9px 12px; cursor: pointer; white-space: nowrap;
+  font: var(--rotulo); letter-spacing: .1em; text-transform: uppercase; color: var(--serigrafia);
+}
+.tecla:hover:not(:disabled) { background: var(--painel-3); }
+.tecla:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 1px 0 var(--base); }
+.tecla:disabled { color: #6f675d; cursor: default; }
+.tecla.p { padding: 6px 9px; font-size: 10px; }
+.tecla.larga { width: 100%; margin-top: auto; }
+.tecla.forte { background: var(--ambar); color: var(--sulco); border-top-color: #ffd58a; }
+.tecla.forte:hover:not(:disabled) { background: #ffb94f; }
+.tecla.forte:disabled { background: var(--painel-2); color: #6f675d; border-top-color: var(--aresta); }
+.x { background: none; border: 0; color: var(--aco); cursor: pointer; font-size: 18px; line-height: 1; padding: 0 4px; }
+.x:hover { color: var(--vermelho); }
+
+.arquivo { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--ambar); font-family: var(--mono); }
+.arquivo span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trecho { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* ---------- chaves ---------- */
+.chaves { display: grid; gap: 4px; margin: 16px 0 14px; }
+.chave { display: flex; align-items: center; gap: 10px; color: var(--aco); font-size: 13px; background: none; border: 0; padding: 4px 0; cursor: pointer; text-align: left; border-radius: 3px; }
+.chave i { width: 30px; height: 16px; border-radius: 8px; background: var(--sulco); position: relative; flex: none; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .7); }
+.chave i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--aco); transition: left .12s; }
+.chave[aria-checked="true"] { color: var(--serigrafia); }
+.chave[aria-checked="true"] i::after { left: 16px; background: var(--ambar); box-shadow: 0 0 6px rgba(242, 169, 59, .7); }
+
+/* ---------- versão ---------- */
+.proc { display: grid; grid-template-columns: minmax(0, 1fr) 116px; gap: 22px; flex: 1; min-height: 0; }
+.proc-esq { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.vozes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.voz {
+  background: var(--painel-2); border: 0; border-top: 1px solid var(--aresta); border-radius: 3px;
+  box-shadow: 0 2px 0 var(--base); padding: 10px 10px 9px; cursor: pointer; text-align: left;
+  display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--aco);
+}
+.voz:hover { color: var(--serigrafia); }
+.voz.on { color: var(--serigrafia); background: var(--painel-3); }
+.voz.on .lamp { background: var(--ambar); box-shadow: 0 0 8px rgba(242, 169, 59, .8); }
+.pre { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pre .tecla { padding: 6px 9px; font-size: 10px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.pre .preset { display: inline-flex; }
+.pre .preset .tecla { border-radius: 3px 0 0 3px; }
+.pre .preset .tira { border-radius: 0 3px 3px 0; padding: 6px 7px; color: var(--aco); margin-left: 1px; }
+.pre .preset .tira:hover { color: var(--vermelho); }
+textarea.letra { flex: 1; min-height: 70px; color: var(--serigrafia); }
+
+/* "Sem": o que fica de fora. Tecla apertada = item riscado. */
+.dica { color: var(--aco); letter-spacing: .04em; text-transform: none; font-weight: 500; margin-left: 6px; opacity: .8; }
+.sem { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.sem .tecla[aria-pressed="true"] { background: var(--painel-3); color: var(--ambar); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+
+/* fader vertical de tom */
+.fader { display: flex; flex-direction: column; align-items: center; min-height: 0; }
+.fader > .etq { align-self: flex-start; margin-bottom: 8px; }
+.leitura {
+  width: 100%; background: var(--sulco); border-radius: 3px; text-align: center; padding: 8px 0 7px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .6); border-bottom: 1px solid var(--aresta);
+  color: var(--ambar); font: 300 30px/1 var(--mono);
+}
+.leitura small { display: block; font: 600 10px/1 "Barlow SC", sans-serif; letter-spacing: .14em; opacity: .65; margin-top: 6px; }
+.curso { position: relative; flex: 1; width: 100%; margin-top: 16px; min-height: 120px; cursor: ns-resize; touch-action: none; }
+.curso .fenda { position: absolute; left: 50%; top: 0; bottom: 0; width: 6px; margin-left: -3px; background: var(--sulco); border-radius: 3px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .8); }
+.curso .risco { position: absolute; left: 20px; width: 12px; height: 1px; background: #5b534a; pointer-events: none; }
+.curso .risco.forte { width: 18px; left: 14px; background: var(--aco); }
+.curso .num { position: absolute; right: 2px; transform: translateY(-50%); font: 500 11px/1 var(--mono); color: var(--aco); cursor: pointer; background: none; border: 0; padding: 4px; }
+.curso .num:hover { color: var(--serigrafia); }
+.curso .num.on { color: var(--ambar); }
+.curso .knob {
+  position: absolute; left: 50%; width: 34px; height: 20px; margin: -10px 0 0 -17px; border-radius: 3px;
+  background: linear-gradient(#d8cdb6, #a59b88); box-shadow: 0 3px 0 var(--base), 0 5px 8px rgba(0, 0, 0, .5);
+  cursor: grab; border: 0; padding: 0;
+}
+.curso .knob:active { cursor: grabbing; }
+.curso .knob::after { content: ""; position: absolute; left: 4px; right: 4px; top: 9px; height: 2px; background: var(--chassi); }
+
+/* ---------- saída ---------- */
+.tomada { margin-bottom: 12px; min-width: 0; }
+.tomada-t { font-weight: 500; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tomada-s { color: var(--aco); font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.variacoes { display: flex; gap: 6px; margin-top: 10px; align-items: center; }
+.variacoes .tecla.on { background: var(--painel-3); color: var(--ambar); }
+.canais { min-height: 0; overflow-y: auto; }
+.canal { padding: 8px 0; border-top: 1px solid #3b352f; }
+.canal-cab { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.canal-nome { font-weight: 500; }
+.canal-nome .nota { font-size: 12px; font-weight: 400; letter-spacing: 0; }
+.tc { font: 400 12px/1 var(--mono); color: var(--aco); }
+.canal-corpo { display: flex; gap: 12px; align-items: center; }
+.play {
+  width: 36px; height: 30px; flex: none; background: var(--painel-2); border: 0; border-top: 1px solid var(--aresta);
+  border-radius: 3px; box-shadow: 0 2px 0 var(--base); position: relative; cursor: pointer;
+}
+.play::after { content: ""; position: absolute; left: 14px; top: 8px; border-left: 10px solid var(--serigrafia); border-top: 7px solid transparent; border-bottom: 7px solid transparent; }
+.play:disabled { cursor: default; }
+.play:disabled::after { border-left-color: #5b534a; }
+.play.on { background: var(--painel-3); }
+.play.on::after { left: 12px; top: 8px; width: 4px; height: 13px; border: 0; border-left: 4px solid var(--ambar); border-right: 4px solid var(--ambar); }
+.janela { flex: 1; height: 40px; background: var(--sulco); border-radius: 3px; box-shadow: inset 0 2px 5px rgba(0, 0, 0, .6); padding: 4px 6px; min-width: 0; }
+.janela.viva { cursor: pointer; }
+.janela.arrasta { cursor: grab; }
+.onda { width: 100%; height: 100%; display: block; }
+.onda rect { fill: #7d766b; }
+.onda rect.tocado { fill: var(--ambar); }
+.vu { display: flex; gap: 2px; margin: 6px 0 0 48px; }
+.vu i { flex: 1; height: 4px; background: #3a342e; border-radius: 1px; }
+.vu i.v { background: var(--verde); }
+.vu i.a { background: var(--ambar); }
+.vu i.r { background: var(--vermelho); }
+.canal-acoes { display: flex; gap: 8px; margin: 8px 0 0 48px; flex-wrap: wrap; }
+
+.rec {
+  margin-top: auto; display: flex; align-items: center; gap: 16px;
+  background: var(--sulco); border-radius: 4px; padding: 12px 14px; box-shadow: inset 0 2px 6px rgba(0, 0, 0, .6);
+}
+.rec button {
+  width: 54px; height: 54px; border-radius: 50%; border: 0; cursor: pointer; flex: none;
+  background: radial-gradient(circle at 35% 30%, #ef6a57, var(--vermelho) 60%, #9c2a1e);
+  box-shadow: 0 0 0 4px var(--painel), 0 0 0 5px var(--aresta), 0 4px 10px rgba(0, 0, 0, .6);
+}
+.rec button:hover { filter: brightness(1.1); }
+.rec button:active { transform: translateY(1px); }
+.rec.rodando button { animation: gravando 1.4s ease-in-out infinite; }
+@keyframes gravando {
+  0%, 100% { box-shadow: 0 0 0 4px var(--painel), 0 0 0 5px var(--aresta), 0 0 22px rgba(213, 64, 47, .9); }
+  50% { box-shadow: 0 0 0 4px var(--painel), 0 0 0 5px var(--aresta), 0 0 4px rgba(213, 64, 47, .2); }
+}
+.rec .txt { min-width: 0; }
+.rec .txt b { display: block; font: 600 15px/1 "Barlow SC", sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.rec .txt span { color: var(--aco); font-size: 12px; display: block; margin-top: 6px; line-height: 1.35; }
+.rec.aviso .txt span { color: var(--ambar); }
+.rec.falha .txt span { color: #f08a7c; }
+
+/* ---------- cadeia de sinal ---------- */
+footer { display: flex; align-items: center; gap: 18px; padding: 0 22px; min-width: 0; }
+.cadeia { display: flex; align-items: center; flex: none; }
+.etapa { display: flex; align-items: center; gap: 8px; }
+.etapa + .etapa::before { content: ""; width: 26px; height: 1px; background: var(--aresta); margin: 0 10px; }
+.etapa .tc { min-width: 30px; }
+.etapa.ativa .etq { color: var(--serigrafia); }
+.etapa.fora { opacity: .35; }
+.status { flex: 1; min-width: 0; color: var(--aco); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status.falha { color: #f08a7c; }
+.recentes { display: flex; gap: 8px; align-items: center; flex: none; }
+.fita { background: var(--painel); border: 0; border-top: 1px solid var(--aresta); border-radius: 3px; padding: 8px 11px; font-size: 12px; color: var(--aco); max-width: 132px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.fita:hover { color: var(--serigrafia); background: var(--painel-2); }
+
+/* ---------- histórico ---------- */
+.fitas { display: grid; gap: 8px; }
+.fita-linha { background: var(--sulco); border-radius: 3px; padding: 11px 14px; box-shadow: inset 0 2px 5px rgba(0, 0, 0, .5); }
+.fita-topo { display: flex; align-items: center; gap: 10px; }
+.fita-titulo { font-weight: 500; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fita-meta { color: var(--aco); font-size: 12px; margin: 4px 0 0 18px; }
+.fita-acoes { display: flex; gap: 8px; margin: 10px 0 0 18px; flex-wrap: wrap; }
+.vazio { color: var(--aco); padding: 8px 0; }
+
+/* ---------- diagnóstico ---------- */
+.d-linha { display: flex; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid #3b352f; }
+.d-linha:first-child { border-top: 0; }
+.d-nome { width: 250px; flex: none; }
+.d-det { color: var(--aco); font: 400 12px/1.3 var(--mono); word-break: break-all; }
+.inst-placa { display: flex; gap: 12px; align-items: center; }
+.inst-item { display: grid; grid-template-columns: 8px 1fr auto; gap: 6px 12px; align-items: center; padding: 12px 0; border-top: 1px solid #3b352f; }
+.inst-item:first-child { border-top: 0; }
+.inst-item .inst-desc { grid-column: 2 / 4; color: var(--aco); font-size: 12px; line-height: 1.4; }
+.inst-item .inst-sit { grid-column: 2 / 4; font: 400 11px/1.3 var(--mono); color: var(--aco); }
+.inst-item .inst-sit.aviso { color: var(--ambar); }
+.inst-item .inst-sit.falha { color: var(--vermelho); white-space: pre-wrap; }
+.inst-nome b { font-weight: 600; }
+.inst-nome span { color: var(--aco); font-size: 12px; margin-left: 8px; }
+.inst-registro { max-height: 220px; overflow: auto; margin-top: 12px; }
+.registro { background: var(--sulco); border-radius: 3px; padding: 10px; white-space: pre-wrap; font: 400 12px/1.4 var(--mono); color: var(--aco); }
+
+/* ---------- avisos ---------- */
+.erro { color: #f08a7c; white-space: pre-wrap; margin-top: 10px; font-size: 13px; }
+.barra { height: 6px; background: var(--sulco); border-radius: 3px; overflow: hidden; margin: 14px 0 8px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .7); }
+.barra i { display: block; height: 100%; width: 0; background: var(--ambar); transition: width .25s; }
+
+/* ---------- painéis (diálogos) ---------- */
+dialog.painel {
+  background: var(--painel); color: var(--serigrafia); border: 0; border-top: 1px solid var(--aresta);
+  border-radius: 5px; padding: 16px 18px 18px; width: 560px; max-width: calc(100vw - 40px); max-height: calc(100vh - 60px);
+  box-shadow: 0 2px 0 var(--base), 0 24px 60px rgba(0, 0, 0, .7);
+}
+dialog.painel.largo { width: 900px; }
+dialog.painel::backdrop { background: rgba(15, 13, 12, .72); }
+.grade { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grade label { display: grid; gap: 6px; }
+.grade .campo { font: 400 14px/1.4 "Barlow", sans-serif; letter-spacing: 0; text-transform: none; }
+.grade .campo.mono { font-family: var(--mono); font-size: 13px; }
+/* ---------- o cantor ---------- */
+/* Desenho em quatro quadros (boca fechada, meio aberta, aberta, olhos fechados), trocados conforme o som. */
+/* sem cortar nas bordas: ele quica e gira, o chapéu passa um pouco da caixa. A folga de cima é para o pulo. */
+.palco { flex: 1; min-height: 0; display: flex; align-items: flex-end; justify-content: center; overflow: visible; margin: 4px 0 10px; padding-top: 18px; pointer-events: none; }
+.cantor { position: relative; height: 100%; max-height: 200px; aspect-ratio: 328 / 400; cursor: pointer; transform-origin: 50% 100%; pointer-events: auto; }
+.cantor img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; pointer-events: none; -webkit-user-drag: none; }
+.cantor img.on { opacity: 1; }
+.cantor.saudando { animation: pulinho .5s ease-out; }
+@keyframes pulinho { 0%, 100% { transform: translateY(0) rotate(0); } 40% { transform: translateY(-12px) rotate(-5deg); } }
+.tecla.larga { margin-top: 0; flex: none; }
+
+.grade.tres { grid-template-columns: 1.4fr 1fr 1fr; }
+
+/* painel de voz: réguas horizontais com leitura em âmbar */
+.reguas { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 26px; margin-top: 18px; }
+.regua { display: grid; grid-template-columns: 1fr 64px; gap: 6px 12px; align-items: center; }
+.regua .etq { grid-column: 1 / -1; }
+.regua output { font: 400 13px/1 var(--mono); color: var(--ambar); text-align: right; background: var(--sulco); border-radius: 3px; padding: 6px 7px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .6); }
+.regua.desligada, #vz-tomExtra-linha.desligada { opacity: .38; }
+input[type=range] { appearance: none; width: 100%; height: 18px; background: none; margin: 0; cursor: ew-resize; }
+input[type=range]::-webkit-slider-runnable-track { height: 6px; background: var(--sulco); border-radius: 3px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .8); }
+input[type=range]::-webkit-slider-thumb {
+  appearance: none; width: 16px; height: 22px; margin-top: -8px; border-radius: 3px;
+  background: linear-gradient(#d8cdb6, #a59b88); box-shadow: 0 2px 0 var(--base);
+}
+.vz-chaves { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 20px; margin-top: 18px; }
+
+.lora-item { display: flex; gap: 10px; align-items: center; margin-top: 8px; font-size: 13px; }
+.lora-item input[type=number] { width: 72px; }
+.lora-item span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* a partitura é papel: fundo claro de propósito, dentro do equipamento escuro */
+.folha { background: #f3ecdc; color: #1f1c19; border-radius: 3px; padding: 10px; overflow: auto; max-height: 46vh; min-height: 60px; }
+details { margin-top: 12px; }
+summary { cursor: pointer; padding: 4px 0; }
+details textarea { margin-top: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lamp.pisca, .rec.rodando button { animation: none; }
+  .barra i, .chave i::after { transition: none; }
+}
+
+/* ---------- reformulação: o que se usa à mostra ---------- */
+.mais { margin: -6px 0 10px; }
+.mais > summary { font: var(--rotulo); letter-spacing: .12em; text-transform: uppercase; color: var(--aco); cursor: pointer; padding: 4px 0; list-style: none; user-select: none; }
+.mais > summary::-webkit-details-marker { display: none; }
+.mais > summary::before { content: "+"; display: inline-block; width: 14px; color: var(--ambar); }
+.mais[open] > summary::before { content: "−"; }
+.mais > summary:hover { color: var(--serigrafia); }
+.mais > .chaves { margin: 6px 0 0; }
+
+.painel-voz { gap: 0; }
+.painel-voz #voz-slot { flex: 1; min-height: 0; overflow-y: auto; }
+.painel-voz-dica { margin: 12px 0 10px; }
+.vz-mod { display: grid; gap: 12px; }
+.vz-mod > label { display: grid; gap: 6px; }
+.vz-ess .campo { font: 400 15px/1.4 "Barlow", sans-serif; letter-spacing: 0; text-transform: none; }
+.vz-ess .chaves { margin: 0; gap: 6px; }
+.painel-voz .vz-ess .chave { font-size: 14px; padding: 4px 0; }
+.painel-voz .vz-ess .rot { margin-top: 12px; }
+.painel-voz-botoes { margin-top: 10px; }
+.painel-voz-botoes { gap: 6px; }
+.painel-voz-botoes .tecla { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.painel-voz .vz-mod { gap: 10px; }
+dialog .vz-ess { display: grid; grid-template-columns: 1.1fr 1fr 1fr 1fr; gap: 6px 18px; align-items: start; }
+dialog .vz-ess > .vz-mod { grid-row: 1 / span 2; }
+dialog .vz-ess .rot { margin: 0; grid-row: 1; }
+dialog .vz-ess .chaves { grid-row: 2; }
+
+/* com voz trocada, o que vai para o FL vem primeiro */
+.canais.foco-voz { display: flex; flex-direction: column; }
+.canais.foco-voz > .canal { flex: none; }
+.canais.foco-voz > [data-canal="voz"] { order: 1; border-top: 0; }
+.canais.foco-voz > [data-canal="instr"] { order: 2; }
+.canais.foco-voz > [data-canal="vocal"] { order: 3; }
+.canais.foco-voz > [data-canal="cover"] { order: 4; }
+.extras { display: contents; }
+.tecla.p.extra { color: var(--ambar); cursor: grab; }
+
+/* ---------- tons por frase ---------- */
+.frases { max-height: 52vh; overflow-y: auto; border-top: 1px solid #3b352f; }
+.frase { display: grid; grid-template-columns: 120px 70px 1fr; align-items: center; gap: 12px; padding: 7px 2px; border-bottom: 1px solid #3b352f; }
+.frase .mono { font-family: var(--mono); font-size: 13px; color: var(--serigrafia); }
+.frase-tons { display: flex; gap: 6px; justify-content: flex-end; }
+.frase-tons .tecla { min-width: 46px; }
+.frase-tons .tecla.on { background: var(--ambar); color: var(--sulco); border-top-color: #ffd58a; }
+
+/* ---------- segundo modelo ---------- */
+.vz-mod .dica { text-transform: none; letter-spacing: 0; color: #7d756a; margin-left: 6px; }
+.vz-mod .chaves { margin: 0; }
+.vistas { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+.vistas .tecla { padding: 3px 8px; font-size: 10px; }
+.vistas .tecla.on { background: var(--ambar); color: var(--sulco); border-top-color: #ffd58a; }
+
+/* ---------- voz ao vivo ---------- */
+.av-visor { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 12px 14px; background: var(--sulco); border-radius: 4px; box-shadow: inset 0 1px 4px rgba(0, 0, 0, .7); font: 400 13px/1.2 var(--mono); color: var(--ambar); }
+.av-visor #av-estado { flex: none; min-width: 210px; }
+.av-vu { flex: 1; height: 8px; background: #0d0c0b; border-radius: 4px; overflow: hidden; }
+.av-vu i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--verde) 0 70%, var(--ambar) 70% 90%, var(--vermelho) 90%); transition: width .12s linear; }
+#btn-voz-ao-vivo.no-ar { color: var(--verde); }
+
+.av-retorno { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+.av-retorno .chave { flex: none; font-size: 14px; }
+.av-retorno .campo { flex: 1; min-width: 0; font: 400 14px/1.4 "Barlow", sans-serif; letter-spacing: 0; text-transform: none; }
+
+/* ---------- baixar modelos ---------- */
+#md-lista { width: 100%; font-size: 12px; line-height: 1.5; }
+.md-andamento { margin-top: 10px; max-height: 30vh; overflow-y: auto; }
+.md-linha { display: grid; grid-template-columns: 200px 1fr; gap: 12px; padding: 5px 2px; border-bottom: 1px solid #3b352f; font-size: 13px; }
+.md-linha .mono { font-family: var(--mono); color: var(--serigrafia); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md-linha .ok { color: var(--verde); }
+.md-linha .ruim { color: var(--vermelho); }
+
+/* ---------- biblioteca de modelos ---------- */
+.md-abas { display: flex; gap: 4px; margin-bottom: 14px; background: var(--sulco); border-radius: 4px; padding: 3px; width: max-content; }
+.md-aba { font: var(--rotulo); letter-spacing: .12em; text-transform: uppercase; color: var(--aco); background: none; border: 0; border-radius: 3px; padding: 7px 14px; cursor: pointer; }
+.md-aba.on { background: var(--painel-3); color: var(--ambar); }
+.md-filtros { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
+.md-filtros .sep { width: 1px; height: 18px; background: #4a433c; margin: 0 4px; }
+.md-filtros .tecla.on { background: var(--ambar); color: var(--sulco); border-top-color: #ffd58a; }
+.md-modelos { max-height: 46vh; overflow-y: auto; border-top: 1px solid #3b352f; }
+.md-modelo { display: grid; grid-template-columns: 30px minmax(0, 1fr) 132px 172px 38px 62px 34px; gap: 10px; align-items: center; padding: 6px 2px; border-bottom: 1px solid #3b352f; }
+.md-modelo .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md-modelo .nome small { color: var(--aco); margin-left: 8px; font-size: 12px; }
+.md-modelo .campo { padding: 6px 26px 6px 9px; font: 400 13px/1.3 "Barlow", sans-serif; letter-spacing: 0; text-transform: none; }
+.md-estrela { background: none; border: 0; cursor: pointer; font-size: 18px; line-height: 1; color: #6f675d; padding: 2px; }
+.md-estrela.on { color: var(--ambar); text-shadow: 0 0 6px rgba(242, 169, 59, .6); }
+.md-modelo.em-uso .nome { color: var(--ambar); }
+
+.md-modelo .tecla { padding-left: 4px; padding-right: 4px; }
+.md-lixo { color: var(--aco); }
+.md-lixo:hover { color: var(--vermelho); }
+
+/* ---------- voz pelo celular ---------- */
+.aba-solta { font: var(--rotulo); letter-spacing: .14em; text-transform: uppercase; color: var(--ambar); background: none; border: 1px solid #4a433c; border-radius: 3px; padding: 6px 12px; margin-left: 10px; cursor: pointer; align-self: center; }
+.aba-solta:hover { background: var(--painel); }
+.aba-solta.no-ar { color: var(--verde); border-color: var(--verde); }
+.cel-corpo { display: grid; grid-template-columns: 210px 1fr; gap: 18px; align-items: start; margin-top: 6px; }
+.cel-corpo img { border-radius: 6px; display: block; }
+
+.md-modelo .nome { cursor: text; }
+.md-modelo .nome:hover { color: var(--ambar); }
+.md-modelo .nome .campo { width: 100%; padding: 5px 8px; }

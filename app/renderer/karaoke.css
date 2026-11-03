@@ -1,0 +1,120 @@
+/* Karaokê: mesma mesa de estúdio (tokens e peças de style.css). O palco é o visor grande da letra. */
+
+body.karaoke { grid-template-rows: 58px minmax(0, 1fr) 70px; }
+
+/* topo: marca + link */
+.karaoke header { gap: 22px; }
+.k-entrada { display: flex; gap: 8px; align-items: center; flex: 1; max-width: 900px; }
+.k-entrada #k-link { flex: 1; min-width: 0; }
+.k-entrada #k-recentes { width: 230px; flex: none; }
+
+/* tela: palco + lateral */
+.k-tela { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 10px; }
+.k-lado { overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 6px; }
+/* cada bloco fica do tamanho do que tem dentro; quem rola é a coluna (sem isso eles encolhem e se sobrepõem) */
+.k-lado > .modulo { padding: 14px 16px 16px; flex: none; min-height: auto; }
+.k-lado .mod-cab { margin-bottom: 10px; }
+.k-rot { display: flex; justify-content: space-between; color: var(--aco); font-size: 12px; margin: 10px 0 5px; }
+.k-rot:first-of-type { margin-top: 0; }
+.k-lat { margin-top: 8px; font-size: 12px; }
+
+.visor-p { background: var(--sulco); color: var(--ambar); border-radius: 3px; padding: 4px 9px; font-size: 13px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .6); }
+.k-info { display: flex; align-items: center; gap: 10px; }
+
+/* palco */
+.k-palco { position: relative; overflow: hidden; }
+.k-titulo { font: 500 22px/1.2 "Barlow", sans-serif; }
+.k-sub { color: var(--aco); font-size: 13px; margin-top: 4px; }
+.k-letra {
+  flex: 1; min-height: 0; margin-top: 18px; border-radius: 4px; background: var(--sulco);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, .7); border-bottom: 1px solid var(--aresta);
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 14px;
+  padding: 24px 32px; text-align: center; overflow: hidden;
+}
+.k-vazio { color: #6f675d; font-size: 15px; }
+.k-l { font: 500 26px/1.25 "Barlow", sans-serif; color: #6f675d; max-width: 100%; transition: color .2s; }
+.k-l.antes { font-size: 20px; color: #4f483f; }
+.k-l.depois { font-size: 22px; }
+.k-l.depois + .k-l.depois { font-size: 19px; color: #514a41; }
+.k-l.agora {
+  font-size: 44px; line-height: 1.2; font-weight: 500;
+  /* preenchimento da linha conforme ela é cantada (--p de 0 a 100%) */
+  background: linear-gradient(90deg, var(--ambar) var(--p, 0%), var(--serigrafia) var(--p, 0%));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.k-l.pausa { color: var(--aco); letter-spacing: .3em; }
+.k-conta { display: flex; gap: 12px; height: 16px; }
+.k-conta i { width: 14px; height: 14px; border-radius: 50%; background: var(--ambar); box-shadow: 0 0 10px rgba(242, 169, 59, .8); }
+.k-simples { align-self: stretch; overflow-y: auto; white-space: pre-wrap; font-size: 20px; line-height: 1.6; color: var(--serigrafia); text-align: center; }
+
+/* tom da música e placar de afinação */
+.k-tomgrupo { display: flex; align-items: center; gap: 4px; }
+.k-tomgrupo .tecla { width: 24px; height: 24px; padding: 0; font-size: 14px; }
+.k-tomgrupo.incerto .visor-p { box-shadow: inset 0 1px 3px rgba(0, 0, 0, .6), inset 0 -2px 0 rgba(242, 169, 59, .45); }
+.k-placar { color: var(--verde); }
+
+/* régua de afinação: notas da voz original rolando, a sua voz por cima */
+.k-regua { display: block; width: 100%; height: 120px; margin-top: 10px; border-radius: 4px; background: var(--sulco); box-shadow: inset 0 2px 8px rgba(0, 0, 0, .7); flex: none; }
+
+/* preparo */
+.k-prog { position: absolute; left: 18px; right: 18px; bottom: 18px; background: var(--painel); border-top: 1px solid var(--aresta); border-radius: 4px; padding: 12px 14px; display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center; box-shadow: 0 2px 0 var(--base); }
+.k-prog-txt { font-size: 14px; }
+.k-trilho { grid-column: 1; height: 6px; background: var(--sulco); border-radius: 3px; overflow: hidden; }
+.k-trilho i { display: block; height: 100%; width: 0; background: var(--ambar); transition: width .3s; }
+.k-prog .tecla { grid-row: 1 / span 2; grid-column: 2; }
+
+.k-gravado { position: absolute; left: 18px; right: 18px; bottom: 18px; background: var(--painel); border-top: 1px solid var(--aresta); border-radius: 4px; padding: 12px 14px; box-shadow: 0 2px 0 var(--base); font-size: 13px; }
+.k-gravado b { color: var(--verde); font-weight: 500; }
+.k-gravado .arqs { color: var(--aco); font-family: var(--mono); font-size: 12px; margin: 6px 0 10px; }
+
+/* medidor do microfone */
+.k-medidor { height: 6px; background: var(--sulco); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+.k-medidor i { display: block; height: 100%; width: 0; background: var(--verde); transition: width .06s linear; }
+.k-medidor i.alto { background: var(--vermelho); }
+
+/* efeitos */
+.k-efeitos { display: flex; flex-direction: column; gap: 8px; }
+.k-ef { background: var(--sulco); border-radius: 3px; padding: 8px 10px; box-shadow: inset 0 1px 4px rgba(0, 0, 0, .55); }
+.k-ef.falhou { border-left: 2px solid var(--vermelho); }
+.k-ef-cab { display: flex; align-items: center; gap: 6px; }
+.k-ef-cab .nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.k-ef-cab .chave { padding: 0; }
+.k-ef .erro { color: #f08a7c; font-size: 12px; margin-top: 4px; }
+.k-ef-rap { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: center; margin-top: 8px; font-size: 12px; color: var(--aco); }
+.k-ef-rap .campo { padding: 5px 8px; font-size: 12px; }
+.k-ef-rap .valor { display: flex; align-items: center; gap: 8px; }
+.k-ef-rap .valor span { font-family: var(--mono); color: var(--serigrafia); min-width: 34px; text-align: right; }
+.k-ef-rap .chave { padding: 0; }
+.k-add { margin-top: 10px; }
+.k-add .campo { flex: 1; }
+.tecla.mini { padding: 4px 6px; font-size: 10px; }
+
+/* faders horizontais */
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 18px; background: none; cursor: pointer; margin: 0; }
+input[type="range"]::-webkit-slider-runnable-track { height: 4px; background: var(--sulco); border-radius: 2px; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .7); }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 18px; margin-top: -7px; border-radius: 2px; background: var(--painel-3); border-top: 1px solid #6a6157; box-shadow: 0 2px 0 var(--base); }
+input[type="range"]:disabled { opacity: .4; cursor: default; }
+.k-lado .chave { margin-top: 10px; }
+
+.k-atraso { justify-content: space-between; }
+.k-atraso .visor-p { flex: 1; text-align: center; }
+
+/* rodapé: transporte */
+.k-pe { gap: 16px; }
+.k-play { width: 52px; height: 40px; font-size: 16px; padding: 0; }
+.k-tempo { color: var(--ambar); font-size: 14px; min-width: 110px; }
+.k-barra { flex: 1; min-width: 120px; }
+.k-rec {
+  width: 44px; height: 44px; border-radius: 50%; border: 0; cursor: pointer; flex: none;
+  background: radial-gradient(circle at 35% 30%, #ef6a57, var(--vermelho) 60%, #9c2a1e);
+  box-shadow: 0 0 0 3px var(--painel), 0 0 0 4px var(--aresta), 0 3px 8px rgba(0, 0, 0, .6);
+}
+.k-rec:disabled { filter: grayscale(1) brightness(.6); cursor: default; }
+.k-rec.gravando { animation: gravando 1.4s ease-in-out infinite; border-radius: 8px; }
+.k-status { color: var(--aco); font-size: 13px; min-width: 0; max-width: 34%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-status.erro { color: #f08a7c; }
+
+@media (prefers-reduced-motion: reduce) {
+  .k-rec.gravando { animation: none; }
+  .k-l, .k-trilho i, .k-medidor i { transition: none; }
+}

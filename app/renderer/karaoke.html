@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Karaokê</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="karaoke.css">
+</head>
+<body class="karaoke">
+
+<header>
+  <div class="marca" id="marca">Karaokê</div>
+  <div class="k-entrada">
+    <input class="campo mono" id="k-link" placeholder="Cole o link da música (Ctrl+V) e aperte Enter" spellcheck="false">
+    <button class="tecla forte" id="k-preparar">Preparar</button>
+    <select class="campo" id="k-recentes" title="Músicas já preparadas"><option value="">Já preparadas…</option></select>
+  </div>
+</header>
+
+<main class="tela k-tela">
+  <!-- PALCO -->
+  <section class="modulo k-palco">
+    <div class="mod-cab">
+      <span class="etq">Palco</span>
+      <span class="k-info">
+        <span class="visor-p mono k-placar" id="k-placar" title="Quanto do que você cantou caiu na nota certa (vale cantar uma oitava abaixo)" hidden></span>
+        <span class="k-tomgrupo" id="k-tomgrupo" hidden>
+          <button class="tecla mini" id="k-tom-menos" title="Descer a música meio tom">−</button>
+          <span class="visor-p mono" id="k-tom"></span>
+          <button class="tecla mini" id="k-tom-mais" title="Subir a música meio tom">+</button>
+        </span>
+        <span class="lamp" id="k-lamp"></span>
+      </span>
+    </div>
+    <div class="k-titulo" id="k-titulo">Nenhuma música</div>
+    <div class="k-sub" id="k-sub">cole um link lá em cima: o app tira a voz, acha a letra e mede o tom</div>
+
+    <div class="k-letra" id="k-letra" aria-live="off">
+      <div class="k-vazio" id="k-vazio">A letra aparece aqui.</div>
+    </div>
+
+    <canvas class="k-regua" id="k-regua" hidden aria-label="Notas da música e a nota que você está cantando"></canvas>
+
+    <div class="k-prog" id="k-prog" hidden>
+      <div class="k-prog-txt" id="k-prog-txt">Preparando…</div>
+      <div class="k-trilho"><i id="k-prog-barra"></i></div>
+      <button class="tecla p" id="k-cancelar">Cancelar</button>
+    </div>
+
+    <div class="k-gravado" id="k-gravado" hidden></div>
+  </section>
+
+  <!-- LATERAL -->
+  <aside class="k-lado">
+    <section class="modulo">
+      <div class="mod-cab"><span class="etq">Som</span><span class="lamp" id="k-lamp-mic"></span></div>
+      <label class="k-rot">Microfone</label>
+      <select class="campo" id="k-entrada"></select>
+      <div class="k-medidor" title="Nível do microfone"><i id="k-nivel"></i></div>
+      <label class="k-rot">Fone (onde você ouve)</label>
+      <select class="campo" id="k-saida"></select>
+      <button class="chave" id="k-exclusivo" role="switch" aria-checked="true" title="Com isto ligado, outros programas ficam sem som neste fone enquanto o karaokê estiver aberto"><i></i>Fone só pro karaokê (menos atraso)</button>
+      <div class="fraco k-lat" id="k-lat"></div>
+    </section>
+
+    <section class="modulo">
+      <div class="mod-cab"><span class="etq">Efeitos na voz</span><span class="fraco" id="k-ef-nota"></span></div>
+      <div id="k-efeitos" class="k-efeitos"></div>
+      <div class="linha k-add">
+        <select class="campo" id="k-vst"><option value="">Acrescentar plugin VST3…</option></select>
+        <button class="tecla p" id="k-vst-pasta" title="Procurar plugins em outra pasta">Pasta</button>
+      </div>
+    </section>
+
+    <section class="modulo">
+      <div class="mod-cab"><span class="etq">Mixer</span></div>
+      <label class="k-rot">Música <span class="mono" id="k-v-inst-n"></span></label>
+      <input type="range" class="k-fader" id="k-v-inst" min="0" max="150" value="100">
+      <label class="k-rot">Minha voz <span class="mono" id="k-v-voz-n"></span></label>
+      <input type="range" class="k-fader" id="k-v-voz" min="0" max="150" value="100">
+      <label class="k-rot">Voz original (guia) <span class="mono" id="k-v-guia-n"></span></label>
+      <input type="range" class="k-fader" id="k-v-guia" min="0" max="100" value="0">
+      <button class="chave" id="k-ouvir" role="switch" aria-checked="true"><i></i>Me ouvir no fone</button>
+    </section>
+
+    <section class="modulo">
+      <div class="mod-cab"><span class="etq">Letra</span></div>
+      <label class="k-rot">Tempo da letra</label>
+      <div class="linha k-atraso">
+        <button class="tecla p" id="k-atraso-menos" title="Letra aparece mais cedo">− 0,2 s</button>
+        <span class="visor-p mono" id="k-atraso">0,0 s</span>
+        <button class="tecla p" id="k-atraso-mais" title="Letra aparece mais tarde">+ 0,2 s</button>
+      </div>
+      <label class="k-rot">Letra errada? Busque pelo nome</label>
+      <div class="linha">
+        <input class="campo" id="k-busca" placeholder="artista e música" spellcheck="false">
+        <button class="tecla p" id="k-buscar">Buscar</button>
+      </div>
+      <button class="chave" id="k-semcoro" role="switch" aria-checked="false"><i></i>Tirar o coro também (próxima música)</button>
+    </section>
+  </aside>
+</main>
+
+<footer class="k-pe">
+  <button class="tecla k-play" id="k-play" disabled aria-label="Tocar">▶</button>
+  <span class="mono k-tempo" id="k-tempo">0:00 / 0:00</span>
+  <input type="range" class="k-barra" id="k-barra" min="0" max="100" step="0.1" value="0" disabled aria-label="Posição na música">
+  <button class="k-rec" id="k-rec" disabled title="Gravar (a partir de onde a música está)"></button>
+  <span class="k-status" id="k-status"></span>
+</footer>
+
+<script src="karaoke.js"></script>
+</body>
+</html>

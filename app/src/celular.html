@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f1c19">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Haze">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icone.png">
+<link rel="apple-touch-icon" href="icone.png">
+<title>Haze</title>
+<style>
+  :root { --chassi:#1f1c19; --painel:#2b2723; --sulco:#151311; --serigrafia:#e8dec8; --aco:#9a9186; --ambar:#f2a93b; --verde:#86c96a; --vermelho:#d5402f; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--chassi); color: var(--serigrafia); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 520px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 15px; letter-spacing: .28em; text-transform: uppercase; margin: 4px 0 16px; font-weight: 700; }
+  h1 b { color: var(--ambar); }
+  .abas { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; background: var(--sulco); border-radius: 7px; padding: 4px; margin-bottom: 14px; }
+  .aba { background: none; border: 0; border-radius: 5px; padding: 12px 4px; color: var(--aco); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  textarea { width: 100%; min-height: 150px; background: var(--sulco); color: var(--serigrafia); border: 0; border-radius: 5px; padding: 13px 12px; font: inherit; font-size: 16px; resize: vertical; margin-bottom: 6px; }
+  .conta { text-align: right; color: var(--aco); font-size: 12px; margin-bottom: 10px; }
+  .aba.on { background: #403a34; color: var(--ambar); }
+  .bloco { background: var(--painel); border-radius: 8px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 0 #0d0c0b; }
+  label, .rotulo { display: block; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--aco); margin: 0 0 6px; }
+  select, input[type=url] { width: 100%; background: var(--sulco); color: var(--serigrafia); border: 0; border-radius: 5px; padding: 13px 12px; font-size: 16px; margin-bottom: 14px; }
+  .gravar { display: block; width: 168px; height: 168px; margin: 8px auto 10px; border-radius: 50%; border: 6px solid #3a342e; background: radial-gradient(circle at 35% 30%, #ef6a57, var(--vermelho) 60%, #8f2317); color: #fff; font-size: 17px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; touch-action: manipulation; }
+  .gravar:disabled { filter: grayscale(.8) brightness(.6); }
+  .gravar.gravando { animation: pulsa 1s ease-in-out infinite; }
+  @keyframes pulsa { 50% { box-shadow: 0 0 0 14px rgba(213, 64, 47, .25); } }
+  .visor { background: var(--sulco); border-radius: 5px; padding: 12px 14px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; color: var(--ambar); min-height: 46px; text-align: center; }
+  .visor.erro { color: #ff8b7c; }
+  .visor.ok { color: var(--verde); }
+  audio { width: 100%; margin: 4px 0 10px; }
+  .acoes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tecla { display: block; width: 100%; text-align: center; text-decoration: none; background: #403a34; color: var(--serigrafia); border: 0; border-radius: 5px; padding: 14px 10px; font-size: 14px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+  .tecla.forte { background: var(--ambar); color: #151311; }
+  .tecla:disabled { opacity: .45; }
+  .fraco { color: var(--aco); font-size: 13px; margin: 10px 0 0; }
+  .tom { display: grid; grid-template-columns: 64px 1fr 64px; gap: 10px; align-items: stretch; }
+  .passo { background: #403a34; color: var(--serigrafia); border: 0; border-radius: 6px; font-size: 34px; line-height: 1; height: 64px; touch-action: manipulation; }
+  .passo:active { background: var(--ambar); color: #151311; }
+  .tom-valor { background: var(--sulco); border-radius: 6px; display: flex; align-items: center; justify-content: center; font: 700 30px/1 ui-monospace, Menlo, Consolas, monospace; color: var(--ambar); }
+  .tom-atalhos { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .tecla.mini { padding: 10px 4px; font-size: 13px; }
+  .tecla.mini.on { background: var(--ambar); color: #151311; }
+  .ou { text-align: center; color: var(--aco); font-size: 13px; margin: 14px 0 8px; }
+  .faixa { border-top: 1px solid #3b352f; padding-top: 12px; margin-top: 12px; }
+  .faixa:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+  input[type=file] { display: none; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Lado <b>B</b></h1>
+
+  <div class="abas">
+    <button class="aba on" data-aba="falar">Falar</button>
+    <button class="aba" data-aba="texto">Escrever</button>
+    <button class="aba" data-aba="musica">Música</button>
+  </div>
+
+  <div class="bloco">
+    <label for="modelo">Voz</label>
+    <select id="modelo"></select>
+    <span class="rotulo">Tom da voz</span>
+    <div class="tom">
+      <button class="passo" id="tom-menos" aria-label="Tom mais grave">−</button>
+      <div class="tom-valor" id="tom-valor">auto</div>
+      <button class="passo" id="tom-mais" aria-label="Tom mais agudo">+</button>
+    </div>
+    <div class="tom-atalhos">
+      <button class="tecla mini on" id="tom-auto">Automático</button>
+      <button class="tecla mini" data-tom="-12">−12</button>
+      <button class="tecla mini" data-tom="0">0</button>
+      <button class="tecla mini" data-tom="12">+12</button>
+    </div>
+  </div>
+
+  <div class="bloco" id="painel-falar">
+    <button class="gravar" id="gravar">Gravar</button>
+    <div class="visor" id="visor">toque para gravar</div>
+    <div class="ou">ou</div>
+    <label class="tecla" for="arquivo" style="color:var(--serigrafia);font-size:14px;letter-spacing:.06em;margin:0">Escolher um áudio do celular</label>
+    <input type="file" id="arquivo" accept="audio/*,video/*">
+  </div>
+
+  <div class="bloco" id="painel-texto" hidden>
+    <label for="texto">O que a voz vai dizer</label>
+    <textarea id="texto" maxlength="1500" placeholder="Digite aqui. Pontuação ajuda: vírgula faz pausa, ponto final fecha a frase."></textarea>
+    <div class="conta" id="texto-conta">0 / 1500</div>
+    <button class="tecla forte" id="falar-texto">Gerar áudio</button>
+    <div class="visor" id="visor-texto" style="margin-top:12px">escreva e toque em gerar</div>
+  </div>
+
+  <div class="bloco" id="painel-musica" hidden>
+    <label for="link">Link da música (YouTube)</label>
+    <input type="url" id="link" inputmode="url" autocomplete="off" placeholder="https://…">
+    <div class="acoes" style="margin-bottom:12px">
+      <button class="tecla" id="colar">Colar</button>
+      <button class="tecla forte" id="converter">Converter</button>
+    </div>
+    <div class="visor" id="visor-musica">cole o link e toque em converter</div>
+    <p class="fraco">Leva alguns minutos. Pode fechar a página: ao voltar, ela mostra o resultado. Os arquivos completos também ficam no PC.</p>
+  </div>
+
+  <div class="bloco" id="resultado" hidden>
+    <span class="rotulo">Pronto</span>
+    <div id="faixas"></div>
+  </div>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const aqui = location.pathname.replace(/\/$/, '');
+  const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  const ler = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+  let gravador = null, pedacos = [], inicio = 0, relogio = null;
+  const VELHO = 'o app do PC está numa versão antiga: feche e abra ele de novo';
+  const lerResposta = async (r) => { try { return await r.json(); } catch { if (r.status === 404) throw new Error(VELHO); return {}; } };
+
+  // ---- abas
+  const visorDe = { falar: 'visor', texto: 'visor-texto', musica: 'visor-musica' };
+  let aba = 'falar';
+  function irPara(qual) {
+    aba = qual;
+    document.querySelectorAll('.aba').forEach((b) => b.classList.toggle('on', b.dataset.aba === qual));
+    $('painel-falar').hidden = qual !== 'falar';
+    $('painel-texto').hidden = qual !== 'texto';
+    $('painel-musica').hidden = qual !== 'musica';
+  }
+  document.querySelectorAll('.aba').forEach((b) => b.addEventListener('click', () => irPara(b.dataset.aba)));
+  const dizer = (texto, tipo, onde) => { const v = $(visorDe[onde || aba]); v.textContent = texto; v.className = 'visor' + (tipo ? ' ' + tipo : ''); };
+
+  // ---- tom: "auto" ou um número de semitons, de -24 a +24; os botões + e − andam de 1 em 1
+  let tom = 'auto';
+  function pintarTom() {
+    $('tom-valor').textContent = tom === 'auto' ? 'auto' : (tom > 0 ? '+' + tom : tom < 0 ? '−' + Math.abs(tom) : '0');
+    $('tom-auto').classList.toggle('on', tom === 'auto');
+    document.querySelectorAll('[data-tom]').forEach((b) => b.classList.toggle('on', tom !== 'auto' && Number(b.dataset.tom) === tom));
+    guardar('tom', String(tom));
+  }
+  function andarTom(passo) { tom = Math.max(-24, Math.min(24, (tom === 'auto' ? 0 : tom) + passo)); pintarTom(); }
+  $('tom-menos').addEventListener('click', () => andarTom(-1));
+  $('tom-mais').addEventListener('click', () => andarTom(1));
+  $('tom-auto').addEventListener('click', () => { tom = 'auto'; pintarTom(); });
+  document.querySelectorAll('[data-tom]').forEach((b) => b.addEventListener('click', () => { tom = Number(b.dataset.tom); pintarTom(); }));
+  const tomGuardado = ler('tom');
+  if (tomGuardado && tomGuardado !== 'auto' && Number.isFinite(Number(tomGuardado))) tom = Math.max(-24, Math.min(24, Math.round(Number(tomGuardado))));
+  pintarTom();
+
+  // ---- vozes
+  fetch(aqui + '/modelos').then((r) => r.json()).then((lista) => {
+    const sel = $('modelo');
+    let grupo = null, alvo = sel;
+    for (const m of lista) {
+      if (m.grupo !== grupo) { grupo = m.grupo; alvo = sel; if (grupo) { alvo = document.createElement('optgroup'); alvo.label = grupo; sel.append(alvo); } }
+      const o = document.createElement('option');
+      o.value = m.id; o.textContent = m.nome;
+      alvo.append(o);
+    }
+    const salvo = ler('modelo');
+    if (salvo && lista.some((m) => m.id === salvo)) sel.value = salvo;
+  }).catch(() => dizer('não consegui falar com o PC', 'erro'));
+  $('modelo').addEventListener('change', () => guardar('modelo', $('modelo').value));
+  const escolha = () => 'modelo=' + encodeURIComponent($('modelo').value) + '&tom=' + encodeURIComponent(String(tom));
+
+  // ---- resultado: uma ou mais faixas, cada uma com tocar, compartilhar e baixar
+  const NOMES = { voz: 'Voz', instrumental: 'Instrumental', coro: 'Coro' };
+  async function mostrar(id, arquivos, onde) {
+    $('faixas').replaceChildren();
+    const nota = arquivos.find((x) => x.rotulo === 'voz-nota');
+    for (const a of arquivos) {
+      if (a.rotulo === 'voz-nota') continue;
+      const blob = await (await fetch(aqui + '/arquivo/' + id + '/' + a.n)).blob();
+      // mp3: é o formato de áudio que o compartilhar do celular aceita em mais aparelhos
+      const arq = new File([blob], (NOMES[a.rotulo] || a.rotulo).toLowerCase() + '.mp3', { type: 'audio/mpeg' });
+      const url = URL.createObjectURL(blob);
+      const faixa = document.createElement('div');
+      faixa.className = 'faixa';
+      const nome = document.createElement('span');
+      nome.className = 'rotulo';
+      nome.textContent = NOMES[a.rotulo] || a.rotulo;
+      const som = document.createElement('audio');
+      som.controls = true; som.src = url;
+      const acoes = document.createElement('div');
+      acoes.className = 'acoes';
+      const comp = document.createElement('button');
+      comp.className = 'tecla forte'; comp.textContent = 'Compartilhar';
+      comp.addEventListener('click', async () => {
+        if (!navigator.share || (navigator.canShare && !navigator.canShare({ files: [arq] }))) return dizer('este celular não compartilha direto: toque em Baixar', 'erro', onde);
+        try { await navigator.share({ files: [arq] }); }
+        catch (e) { if (e && e.name !== 'AbortError') dizer('não deu para compartilhar: toque em Baixar', 'erro', onde); }
+      });
+      const baixar = document.createElement('a');
+      baixar.className = 'tecla'; baixar.textContent = 'Baixar'; baixar.href = url; baixar.download = arq.name;
+      acoes.append(comp, baixar);
+      faixa.append(nome, som);
+      if (a.rotulo === 'voz' && nota) {
+        // o WhatsApp guarda as mensagens de voz em .opus com este tipo de nome; compartilhada assim, a voz
+        // costuma chegar como mensagem gravada na hora (bolinha com microfone), não como arquivo
+        const agora = new Date();
+        const dia = agora.getFullYear() + String(agora.getMonth() + 1).padStart(2, '0') + String(agora.getDate()).padStart(2, '0');
+        const bruto = await (await fetch(aqui + '/arquivo/' + id + '/' + nota.n)).blob();
+        const arqNota = new File([bruto], 'PTT-' + dia + '-WA' + String(Math.floor(Math.random() * 9000) + 1000) + '.opus', { type: 'audio/ogg' });
+        const voz = document.createElement('button');
+        voz.className = 'tecla forte'; voz.textContent = 'Mandar como mensagem de voz'; voz.style.marginBottom = '10px';
+        voz.addEventListener('click', async () => {
+          if (!navigator.share || (navigator.canShare && !navigator.canShare({ files: [arqNota] }))) return dizer('este celular não aceita esse formato: use Compartilhar MP3', 'erro', onde);
+          try { await navigator.share({ files: [arqNota] }); }
+          catch (e) { if (e && e.name !== 'AbortError') dizer('não deu: use Compartilhar MP3', 'erro', onde); }
+        });
+        comp.className = 'tecla'; comp.textContent = 'Compartilhar MP3';
+        faixa.append(voz);
+      }
+      faixa.append(acoes);
+      $('faixas').append(faixa);
+    }
+    $('resultado').hidden = false;
+    dizer('pronto', 'ok', onde);
+    $('resultado').scrollIntoView({ behavior: 'smooth' });
+  }
+  async function acompanhar(id, onde) {
+    for (;;) {
+      await new Promise((ok) => setTimeout(ok, 1500));
+      const r = await fetch(aqui + '/estado?id=' + id);
+      const t = await lerResposta(r);
+      if (t.estado === 'erro') throw new Error(t.texto);
+      if (t.estado === 'pronto') return mostrar(id, t.arquivos, onde);
+      dizer(t.texto || 'convertendo…', '', onde);
+    }
+  }
+
+  // ---- falar
+  async function enviar(blob) {
+    $('gravar').disabled = true;
+    $('resultado').hidden = true;
+    dizer('enviando para o PC…', '', 'falar');
+    try {
+      const r = await fetch(aqui + '/enviar?' + escolha(), { method: 'POST', body: blob });
+      const j = await lerResposta(r);
+      if (!r.ok) throw new Error(j.erro || 'o PC recusou a gravação');
+      await acompanhar(j.id, 'falar');
+    } catch (e) {
+      dizer(e.message || 'falhou', 'erro', 'falar');
+    }
+    $('gravar').disabled = false;
+  }
+  $('gravar').addEventListener('click', async () => {
+    if (gravador && gravador.state === 'recording') return gravador.stop();
+    if (!navigator.mediaDevices || !window.MediaRecorder) return dizer('este navegador não grava aqui: use "Escolher um áudio"', 'erro', 'falar');
+    try {
+      const som = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: true } });
+      pedacos = [];
+      gravador = new MediaRecorder(som);
+      gravador.ondataavailable = (e) => { if (e.data.size) pedacos.push(e.data); };
+      gravador.onstop = () => {
+        clearInterval(relogio);
+        som.getTracks().forEach((t) => t.stop());
+        $('gravar').classList.remove('gravando');
+        $('gravar').textContent = 'Gravar';
+        enviar(new Blob(pedacos, { type: gravador.mimeType || 'audio/webm' }));
+      };
+      gravador.start();
+      inicio = Date.now();
+      $('gravar').classList.add('gravando');
+      $('gravar').textContent = 'Parar';
+      relogio = setInterval(() => {
+        const s = Math.floor((Date.now() - inicio) / 1000);
+        dizer('gravando ' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'), '', 'falar');
+        if (s >= 180) gravador.stop();   // 3 minutos por gravação
+      }, 250);
+    } catch (e) {
+      dizer('o celular não liberou o microfone', 'erro', 'falar');
+    }
+  });
+  $('arquivo').addEventListener('change', () => {
+    const f = $('arquivo').files[0];
+    $('arquivo').value = '';
+    if (f) enviar(f);
+  });
+
+  // ---- escrever: o PC lê o texto na voz escolhida
+  $('texto').value = ler('texto') || '';
+  const contar = () => { $('texto-conta').textContent = $('texto').value.length + ' / 1500'; guardar('texto', $('texto').value); };
+  $('texto').addEventListener('input', contar);
+  contar();
+  $('falar-texto').addEventListener('click', async () => {
+    const texto = $('texto').value.trim();
+    if (texto.length < 2) return dizer('escreva o texto', 'erro', 'texto');
+    $('falar-texto').disabled = true;
+    $('resultado').hidden = true;
+    dizer('mandando o texto para o PC…', '', 'texto');
+    try {
+      const r = await fetch(aqui + '/texto?' + escolha(), { method: 'POST', body: texto, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+      const j = await lerResposta(r);
+      if (!r.ok) throw new Error(j.erro || 'o PC recusou o texto');
+      await acompanhar(j.id, 'texto');
+    } catch (e) {
+      dizer(e.message || 'falhou', 'erro', 'texto');
+    }
+    $('falar-texto').disabled = false;
+  });
+
+  // ---- música por link
+  async function seguirMusica(id) {
+    $('converter').disabled = true;
+    try { await acompanhar(id, 'musica'); }
+    catch (e) { dizer(e.message || 'falhou', 'erro', 'musica'); }
+    guardar('musica', '');
+    $('converter').disabled = false;
+  }
+  $('colar').addEventListener('click', async () => {
+    try { $('link').value = (await navigator.clipboard.readText()).trim(); }
+    catch { dizer('segure o dedo no campo e escolha Colar', 'erro', 'musica'); }
+  });
+  $('converter').addEventListener('click', async () => {
+    const link = $('link').value.trim();
+    if (!/^https?:\/\/\S+$/i.test(link)) return dizer('cole um link válido', 'erro', 'musica');
+    $('resultado').hidden = true;
+    dizer('mandando o pedido para o PC…', '', 'musica');
+    try {
+      const r = await fetch(aqui + '/cover?link=' + encodeURIComponent(link) + '&' + escolha(), { method: 'POST' });
+      const j = await lerResposta(r);
+      if (!r.ok) throw new Error(j.erro || 'o PC recusou o pedido');
+      guardar('musica', j.id);
+      seguirMusica(j.id);
+    } catch (e) {
+      dizer(e.message || 'falhou', 'erro', 'musica');
+    }
+  });
+  // voltou à página com uma música ainda em andamento (ou pronta): retoma de onde parou
+  const pendente = ler('musica');
+  if (pendente) {
+    fetch(aqui + '/estado?id=' + pendente).then((r) => {
+      if (!r.ok) return guardar('musica', '');
+      irPara('musica');
+      seguirMusica(pendente);
+    }).catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>

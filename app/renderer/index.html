@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Haze</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="marca" id="marca"></div>
+  <nav>
+    <button class="aba on" data-tab="mesa">Mesa</button>
+    <button class="aba" data-tab="fala">Fala</button>
+    <button class="aba" data-tab="separar">Separar vocal</button>
+    <button class="aba" data-tab="hist">Histórico</button>
+    <button class="aba" data-tab="instalar">Instalar</button>
+    <button class="aba" data-tab="diag">Diagnóstico</button>
+    <button class="aba-solta" id="btn-karaoke" title="Abre a tela de karaokê: cole o link e cante com o seu Auto-Tune">Karaokê</button>
+    <button class="aba-solta" id="btn-celular" title="Gravar no celular e receber o áudio com a voz trocada">Celular</button>
+  </nav>
+</header>
+
+<!-- ============================ MESA ============================ -->
+<main id="tab-mesa" class="tela mesa">
+
+  <!-- ENTRADA -->
+  <section class="modulo">
+    <div class="mod-cab"><span class="etq">Entrada</span><span class="lamp" id="lamp-entrada"></span></div>
+
+    <div class="modos" id="modos" role="tablist" aria-label="O que fazer com a música">
+      <button class="modo" data-modo="voz" role="tab" aria-selected="false">Trocar voz</button>
+      <button class="modo on" data-modo="cover" role="tab" aria-selected="true">Regravar</button>
+      <button class="modo" data-modo="criar" role="tab" aria-selected="false">Criar</button>
+      <button class="modo" data-modo="continuar" role="tab" aria-selected="false">Continuar</button>
+    </div>
+
+    <div class="visor">
+      <div class="t" id="vis-titulo">Sem música</div>
+      <div class="a" id="vis-sub">cole um link ou escolha um arquivo</div>
+      <div class="tc">
+        <div><small>INÍCIO</small><span id="vis-ini">--:--</span></div>
+        <div><small>FIM</small><span id="vis-fim">--:--</span></div>
+        <div><small>TOTAL</small><span id="vis-tot">--:--</span></div>
+      </div>
+    </div>
+
+    <div id="bloco-criar" hidden>
+      <label class="etq rot" for="in-titulo">Título</label>
+      <input class="campo" id="in-titulo" type="text" placeholder="nome da música nova" spellcheck="false">
+      <label class="etq rot" for="in-partitura-modo">Partitura</label>
+      <select class="campo" id="in-partitura-modo">
+        <option value="full">O motor escreve melodia e acordes</option>
+        <option value="melody">O motor escreve só a melodia</option>
+        <option value="off">Direto, sem partitura</option>
+      </select>
+      <button class="tecla larga" id="btn-planejar" style="margin-top:10px">Planejar partitura antes</button>
+    </div>
+
+    <div id="bloco-origem">
+    <label class="etq rot" for="in-url">Origem</label>
+    <div class="linha">
+      <input class="campo" id="in-url" type="text" placeholder="link do YouTube…" spellcheck="false">
+      <button class="tecla" id="btn-arquivo">Arquivo</button>
+    </div>
+    <div class="arquivo" id="arquivo" hidden>
+      <span id="arquivo-nome"></span>
+      <button class="x" id="btn-arquivo-tirar" aria-label="Tirar arquivo">×</button>
+    </div>
+
+    <div class="etq rot" id="trecho-rotulo">Trecho</div>
+    <div class="trecho">
+      <input class="campo mono" id="in-ini" type="text" placeholder="0:00" aria-label="Início do trecho">
+      <input class="campo mono" id="in-fim" type="text" placeholder="até o final" aria-label="Fim do trecho">
+    </div>
+    </div>
+
+    <div id="bloco-duracao" hidden>
+      <label class="etq rot" for="in-duracao">Duração da música</label>
+      <input class="campo mono" id="in-duracao" type="text" value="2:00" aria-label="Duração total">
+    </div>
+
+    <div class="chaves">
+      <button class="chave" id="sw-instrumental" role="switch" aria-checked="false" hidden><i></i>Instrumental, sem voz</button>
+      <button class="chave" id="sw-previa" role="switch" aria-checked="false"><i></i>Só prévia de 30 s</button>
+      <button class="chave" id="sw-separar" role="switch" aria-checked="false"><i></i>Separar vocal da gravação</button>
+      <button class="chave" id="sw-voz" role="switch" aria-checked="false"><i></i><span id="sw-voz-txt">Trocar a voz no Applio</span></button>
+    </div>
+    <details class="mais" id="mais-opcoes">
+      <summary>Mais opções</summary>
+      <div class="chaves">
+        <button class="chave" id="sw-revisar" role="switch" aria-checked="false"><i></i>Conferir a letra antes de gravar</button>
+        <button class="chave" id="sw-partitura" role="switch" aria-checked="false"><i></i>Mostrar partitura</button>
+        <button class="chave" id="sw-repetir" role="switch" aria-checked="false"><i></i>Repetir sem parar</button>
+      </div>
+    </details>
+
+    <!-- o cantor: personagem original no estilo crooner dos anos 50; a boca acompanha o áudio que toca -->
+    <div class="palco" id="palco">
+      <div class="cantor" id="cantor" role="img" aria-label="Cantor da casa">
+        <img src="cantor/f0.png" alt="" class="on">
+        <img src="cantor/f1.png" alt="">
+        <img src="cantor/f2.png" alt="">
+        <img src="cantor/f3.png" alt="">
+      </div>
+    </div>
+
+    <button class="tecla larga" id="btn-ajustes">Ajustes</button>
+  </section>
+
+  <!-- VERSÃO -->
+  <section class="modulo" id="mod-versao">
+    <div class="mod-cab"><span class="etq" id="versao-rotulo">Versão</span><span class="lamp" id="lamp-versao"></span></div>
+    <div class="proc">
+      <div class="proc-esq" id="proc-esq">
+        <div class="etq">Voz</div>
+        <div class="vozes" id="vozes">
+          <button class="voz" data-voz="deep male vocal, low pitched, deep voice"><span class="lamp"></span>Grossa</button>
+          <button class="voz" data-voz="male vocal"><span class="lamp"></span>Masculina</button>
+          <button class="voz" data-voz="female vocal"><span class="lamp"></span>Feminina</button>
+          <button class="voz" data-voz="raspy gravelly vocal"><span class="lamp"></span>Rouca</button>
+          <button class="voz" data-voz="soft breathy vocal"><span class="lamp"></span>Suave</button>
+          <button class="voz on" data-voz=""><span class="lamp"></span>Livre</button>
+        </div>
+
+        <label class="etq rot" for="in-estilo">Estilo</label>
+        <textarea class="campo" id="in-estilo" rows="2" spellcheck="false" placeholder="ex.: violão acústico, sem bateria, intimista"></textarea>
+        <div class="pre" id="presets"></div>
+
+        <div class="etq rot">Sem <span class="dica">o que não entra na gravação</span></div>
+        <div class="sem" id="sem">
+          <button class="tecla p" data-sem="no drums, no percussion" aria-pressed="false">Bateria</button>
+          <button class="tecla p" data-sem="no bass" aria-pressed="false">Baixo</button>
+          <button class="tecla p" data-sem="no electric guitar" aria-pressed="false">Guitarra</button>
+          <button class="tecla p" data-sem="no piano" aria-pressed="false">Piano</button>
+          <button class="tecla p" data-sem="no synthesizer" aria-pressed="false">Sintetizador</button>
+          <button class="tecla p" data-sem="no backing vocals, no choir" aria-pressed="false">Coro</button>
+          <button class="tecla p" data-sem="no strings, no orchestra" aria-pressed="false">Cordas</button>
+        </div>
+        <input class="campo" id="in-sem" type="text" spellcheck="false" placeholder="outros, com vírgula (ex.: saxophone, claps)" aria-label="Outros itens para tirar">
+
+        <div class="linha entre rot">
+          <label class="etq" for="in-letra">Letra <span class="nota" id="letra-nota">vazia = reconhecer sozinho</span></label>
+          <button class="tecla p" id="btn-pedir-letra">Pedir letra</button>
+        </div>
+        <textarea class="campo letra" id="in-letra" spellcheck="false" placeholder="Deixe vazio e o programa reconhece a letra. Ou cole a sua."></textarea>
+      </div>
+
+      <div class="proc-esq painel-voz" id="painel-voz" hidden>
+        <div id="voz-slot"></div>
+        <div class="linha painel-voz-botoes">
+          <button class="tecla" id="btn-voz-avancado">Ajustes finos</button>
+          <button class="tecla" id="btn-voz-ao-vivo" title="Fale no microfone e saia na voz do modelo">Voz ao vivo</button>
+          <button class="tecla" id="btn-modelos" title="Baixar e instalar modelos de voz a partir de uma lista de links">Modelos</button>
+        </div>
+      </div>
+
+      <div class="fader" id="fader">
+        <div class="etq" id="tom-rotulo">Tom</div>
+        <div class="leitura"><span id="tom-num">0</span><small>SEMITONS</small></div>
+        <div class="curso" id="curso"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SAÍDA -->
+  <section class="modulo">
+    <div class="mod-cab"><span class="etq">Saída</span><span class="lamp" id="lamp-saida"></span></div>
+
+    <div class="tomada" id="tomada">
+      <div class="tomada-t" id="saida-titulo">Nada gravado ainda</div>
+      <div class="tomada-s" id="saida-sub">a gravação aparece aqui</div>
+      <div class="variacoes" id="variacoes" hidden></div>
+    </div>
+
+    <div class="canais" id="canais">
+      <div class="canal" data-canal="cover">
+        <div class="canal-cab"><span class="canal-nome">Gravação</span><span class="tc" data-tc>--:--</span></div>
+        <div class="canal-corpo">
+          <button class="play" data-play aria-label="Tocar gravação" disabled></button>
+          <div class="janela" data-janela><svg class="onda"></svg></div>
+        </div>
+        <div class="vu" data-vu></div>
+        <div class="canal-acoes"><button class="tecla p" data-salvar disabled>Salvar</button><button class="tecla p" data-pasta disabled>Pasta</button></div>
+      </div>
+      <div class="canal" data-canal="vocal">
+        <div class="canal-cab"><span class="canal-nome">Vocal</span><span class="tc" data-tc>--:--</span></div>
+        <div class="canal-corpo">
+          <button class="play" data-play aria-label="Tocar vocal" disabled></button>
+          <div class="janela" data-janela><svg class="onda"></svg></div>
+        </div>
+        <div class="vu" data-vu></div>
+        <div class="canal-acoes"><button class="tecla p" data-salvar disabled>Salvar</button><button class="tecla p" data-pasta disabled>Pasta</button><button class="tecla p" id="btn-separar-esta" hidden>Separar esta variação</button><button class="tecla p" id="btn-trocar-voz" hidden>Trocar a voz</button></div>
+      </div>
+      <div class="canal" data-canal="voz" id="canal-voz" hidden>
+        <div class="canal-cab"><span class="canal-nome">Voz final <span class="vistas" id="voz-vistas"></span><span class="nota" id="voz-modelo"></span></span><span class="tc" data-tc>--:--</span></div>
+        <div class="canal-corpo">
+          <button class="play" data-play aria-label="Tocar voz final" disabled></button>
+          <div class="janela" data-janela><svg class="onda"></svg></div>
+        </div>
+        <div class="vu" data-vu></div>
+        <div class="canal-acoes"><button class="tecla p" data-salvar disabled>Salvar</button><button class="tecla p" data-pasta disabled>Pasta</button><span class="extras" id="voz-extras"></span></div>
+      </div>
+      <div class="canal" data-canal="instr">
+        <div class="canal-cab"><span class="canal-nome">Instrumental <span class="nota" id="instr-tom"></span></span><span class="tc" data-tc>--:--</span></div>
+        <div class="canal-corpo">
+          <button class="play" data-play aria-label="Tocar instrumental" disabled></button>
+          <div class="janela" data-janela><svg class="onda"></svg></div>
+        </div>
+        <div class="vu" data-vu></div>
+        <div class="canal-acoes"><button class="tecla p" data-salvar disabled>Salvar</button><button class="tecla p" data-pasta disabled>Pasta</button><button class="tecla p" id="btn-partitura" hidden>Partitura</button></div>
+      </div>
+    </div>
+
+    <div class="rec">
+      <button id="btn-rec" aria-label="Gravar"></button>
+      <div class="txt"><b id="rec-titulo">Gravar</b><span id="rec-sub">escolha uma música e uma voz ou estilo</span></div>
+    </div>
+  </section>
+</main>
+
+<!-- cadeia de sinal -->
+<footer id="rodape">
+  <div class="cadeia" id="cadeia">
+    <div class="etapa" data-etapa="download"><span class="lamp"></span><span class="etq">Baixar</span><span class="tc"></span></div>
+    <div class="etapa" data-etapa="partitura"><span class="lamp"></span><span class="etq">Melodia</span><span class="tc"></span></div>
+    <div class="etapa" data-etapa="letra"><span class="lamp"></span><span class="etq">Letra</span><span class="tc"></span></div>
+    <div class="etapa" data-etapa="cover"><span class="lamp"></span><span class="etq">Gravar</span><span class="tc"></span></div>
+    <div class="etapa" data-etapa="separar"><span class="lamp"></span><span class="etq">Separar</span><span class="tc"></span></div>
+    <div class="etapa" data-etapa="voz"><span class="lamp"></span><span class="etq">Voz</span><span class="tc"></span></div>
+  </div>
+  <div class="status" id="status" role="status" aria-live="polite"></div>
+  <div class="recentes" id="recentes"></div>
+</footer>
+
+<!-- ============================ FALA ============================ -->
+<main id="tab-fala" class="tela coluna" hidden>
+  <section class="modulo estreito">
+    <div class="mod-cab"><span class="etq">Fala</span><span class="lamp" id="lamp-fala"></span></div>
+    <p class="texto">Escreva um texto e ele sai falado. <b>Minha voz clonada</b> ouve uma gravação curta sua e fala com a sua voz e o seu jeito de falar. <b>Voz pronta</b> usa um leitor comum, que pode passar depois pelo seu modelo do Applio. Roda no seu PC, sem internet.</p>
+    <label class="etq" for="fl-texto">Texto</label>
+    <textarea class="campo" id="fl-texto" rows="6" style="margin-top:6px" placeholder="ex.: Hey everyone! Today I'm singing one you guys asked for a lot."></textarea>
+    <div class="grade" style="margin-top:14px">
+      <label class="etq">Quem lê
+        <select class="campo" id="fl-leitor">
+          <option value="clone">Minha voz clonada</option>
+          <option value="kokoro">Voz pronta</option>
+        </select>
+      </label>
+      <label class="etq" id="fl-lingua-rot">Idioma
+        <select class="campo" id="fl-lingua">
+          <option value="en">Inglês</option>
+          <option value="pt">Português</option>
+          <option value="es">Espanhol</option>
+          <option value="fr">Francês</option>
+          <option value="it">Italiano</option>
+          <option value="de">Alemão</option>
+          <option value="ja">Japonês</option>
+        </select>
+      </label>
+      <label class="etq" id="fl-base-rot">Voz
+        <select class="campo" id="fl-base"></select>
+      </label>
+      <label class="etq" id="fl-modelo-rot">Modelo que converte
+        <input class="campo" id="fl-modelo" type="text" readonly>
+      </label>
+    </div>
+    <div id="fl-ref-linha" style="margin-top:14px">
+      <span class="etq">Gravação da sua voz (5 a 20 segundos, de preferência falando)</span>
+      <div class="linha" style="margin-top:6px">
+        <input class="campo" id="fl-ref" type="text" readonly style="flex:1">
+        <button class="tecla" id="fl-ref-trocar">Trocar…</button>
+        <button class="tecla" id="fl-ref-padrao">Usar a padrão</button>
+      </div>
+    </div>
+    <div class="chaves" style="margin:14px 0 0">
+      <button class="chave" id="fl-converter" role="switch" aria-checked="false"><i></i>Converter para a voz do meu modelo do Applio</button>
+    </div>
+    <div class="reguas">
+      <div class="regua" id="fl-emocao-linha"><span class="etq">Emoção (calmo → bem expressivo)</span><input type="range" id="fl-emocao" min="25" max="100" step="5" value="50" aria-label="Emoção da fala"><output id="fl-emocao-v">50</output></div>
+      <div class="regua"><span class="etq">Velocidade da fala</span><input type="range" id="fl-velocidade" min="-50" max="50" step="5" value="0" aria-label="Velocidade da fala"><output id="fl-velocidade-v">0%</output></div>
+      <div class="regua" id="fl-tom-linha"><span class="etq">Tom da voz convertida (semitons)</span><input type="range" id="fl-tom" min="-24" max="24" step="1" value="0" aria-label="Tom da voz"><output id="fl-tom-v">0</output></div>
+    </div>
+    <div class="linha" style="margin-top:16px">
+      <button class="tecla forte" id="btn-falar">Falar</button>
+      <button class="tecla" id="btn-falar-parar" hidden>Parar</button>
+      <span class="texto fraco" id="fl-msg" style="margin:0"></span>
+    </div>
+    <div class="erro" id="fl-erro" hidden></div>
+    <div class="canais" id="fl-canais"></div>
+  </section>
+</main>
+
+<!-- ============================ SEPARAR ============================ -->
+<main id="tab-separar" class="tela coluna" hidden>
+  <section class="modulo estreito">
+    <div class="mod-cab"><span class="etq">Separar vocal</span><span class="lamp" id="lamp-sep"></span></div>
+    <p class="texto">Separa a voz do instrumental de qualquer música. Usa o mesmo modelo do UVR5 (MDX-Net Inst HQ 3). Saída em WAV.</p>
+    <div class="linha">
+      <button class="tecla" id="btn-sep-arquivo">Escolher arquivo</button>
+      <span class="texto fraco" id="sep-arquivo">nenhum arquivo</span>
+    </div>
+    <div class="linha" style="margin-top:14px">
+      <button class="tecla forte" id="btn-sep-ir" disabled>Separar</button>
+      <button class="tecla" id="btn-sep-parar" hidden>Parar</button>
+    </div>
+    <div class="barra" id="sep-barra" hidden><i></i></div>
+    <div class="texto fraco" id="sep-msg"></div>
+    <div class="erro" id="sep-erro" hidden></div>
+    <div class="canais" id="sep-canais"></div>
+  </section>
+</main>
+
+<!-- ============================ HISTÓRICO ============================ -->
+<main id="tab-hist" class="tela coluna" hidden>
+  <section class="modulo">
+    <div class="mod-cab"><span class="etq">Gravações</span><button class="tecla p" id="btn-pasta-saida">Abrir pasta</button></div>
+    <div id="hist-lista" class="fitas"></div>
+  </section>
+</main>
+
+<!-- ============================ INSTALAR ============================ -->
+<main id="tab-instalar" class="tela coluna" hidden>
+  <section class="modulo">
+    <div class="mod-cab"><span class="etq">Sua placa de vídeo</span></div>
+    <div class="inst-placa"><span class="lamp" id="inst-lamp"></span><div><div id="inst-placa-nome">Procurando…</div><div class="d-det" id="inst-placa-modo"></div></div></div>
+    <p class="texto fraco" style="margin:10px 0 0">Cada função baixa só o que precisa, na versão certa pra sua placa. Se a placa não funcionar com alguma IA, o app usa o processador: fica mais lento, mas funciona.</p>
+  </section>
+  <section class="modulo">
+    <div class="mod-cab"><span class="etq">Funções</span>
+      <span class="linha"><button class="tecla p" id="inst-tudo">Instalar tudo que falta</button><button class="tecla p" id="inst-cancelar" hidden>Cancelar</button></span>
+    </div>
+    <div id="inst-lista"></div>
+    <pre class="registro inst-registro" id="inst-registro" hidden></pre>
+  </section>
+</main>
+
+<!-- ============================ DIAGNÓSTICO ============================ -->
+<main id="tab-diag" class="tela coluna" hidden>
+  <section class="modulo">
+    <div class="mod-cab"><span class="etq">Diagnóstico</span>
+      <span class="linha"><button class="tecla p" id="btn-diag">Verificar de novo</button><button class="tecla p" id="btn-ytdlp">Atualizar yt-dlp</button></span>
+    </div>
+    <div id="diag-saida"></div>
+    <pre class="registro" id="ytdlp-saida" hidden></pre>
+  </section>
+  <section class="modulo">
+    <div class="mod-cab"><span class="etq">Espaço em disco</span></div>
+    <p class="texto" id="disco-texto">Medindo…</p>
+    <div class="linha">
+      <button class="tecla p" id="btn-limpar-antigos">Limpar os de mais de 7 dias</button>
+      <button class="tecla p" id="btn-limpar-todos">Limpar todos</button>
+    </div>
+    <p class="texto fraco" style="margin:12px 0 0">São os arquivos de trabalho de cada música (download, vocais intermediários, registro). As faixas prontas não são tocadas. Vão para a Lixeira: o espaço só volta quando você esvaziar a Lixeira. Depois da limpeza, retocar uma música antiga refaz essas etapas.</p>
+  </section>
+</main>
+
+<!-- ============================ AJUSTES ============================ -->
+<dialog id="dlg-ajustes" class="painel">
+  <div class="mod-cab"><span class="etq">Ajustes</span><button class="x" data-fechar aria-label="Fechar">×</button></div>
+  <div class="linha" style="margin-bottom:16px">
+    <button class="tecla" id="btn-voz">Voz (Applio)</button>
+    <span class="texto fraco" id="aj-voz-resumo" style="margin:0"></span>
+  </div>
+  <div class="grade">
+    <label class="etq">Variações
+      <select class="campo" id="aj-variacoes"><option>1</option><option>2</option><option>3</option><option>4</option></select>
+    </label>
+    <label class="etq">Formato
+      <select class="campo" id="aj-formato">
+        <option value="mp3">MP3</option><option value="wav16">WAV 16 bits</option><option value="wav24">WAV 24 bits</option>
+      </select>
+    </label>
+    <label class="etq">Passos de síntese
+      <select class="campo" id="aj-passos">
+        <option value="32">32 (melhor)</option><option value="24">24</option><option value="16">16 (metade do tempo)</option><option value="8">8 (rascunho)</option>
+      </select>
+    </label>
+    <label class="etq">Idioma da letra
+      <select class="campo" id="aj-idioma">
+        <option value="auto">Detectar</option><option value="pt">Português</option><option value="en">Inglês</option><option value="es">Espanhol</option><option value="ja">Japonês</option>
+      </select>
+    </label>
+    <label class="etq">Semente do som
+      <input class="campo mono" id="aj-semente" type="text" inputmode="numeric" placeholder="aleatória">
+    </label>
+    <label class="etq">Semente da composição
+      <input class="campo mono" id="aj-semente-lm" type="text" inputmode="numeric" placeholder="aleatória">
+    </label>
+  </div>
+  <div class="linha" style="margin-top:12px">
+    <button class="tecla p" id="aj-usar-sementes">Usar as sementes da gravação carregada</button>
+    <button class="tecla p" id="aj-limpar-sementes">Sementes aleatórias</button>
+  </div>
+  <button class="chave" id="aj-cantor" role="switch" aria-checked="true" style="margin-top:14px"><i></i>Mostrar o cantor na mesa</button>
+  <button class="chave" id="aj-som" role="switch" aria-checked="true"><i></i>Tocar um som quando terminar</button>
+  <div class="etq rot">LoRA</div>
+  <div class="linha"><button class="tecla p" id="aj-lora">Escolher pasta</button><span class="texto fraco" id="aj-lora-info">nenhum</span></div>
+  <div id="aj-lora-lista"></div>
+</dialog>
+
+<!-- ============================ PEDIR LETRA ============================ -->
+<dialog id="dlg-celular" class="painel">
+  <div class="mod-cab"><span class="etq">Voz pelo celular</span><button class="x" data-fechar aria-label="Fechar">×</button></div>
+  <p class="texto fraco">Você grava no celular, o PC troca a voz e devolve o áudio pronto para mandar no WhatsApp, Instagram ou onde quiser. O celular precisa estar no mesmo Wi-Fi do PC.</p>
+  <div class="cel-corpo" id="cel-corpo" hidden>
+    <img id="cel-qr" alt="Código para abrir no celular" width="210" height="210">
+    <div>
+      <div class="etq">1. Aponte a câmera do celular para o código</div>
+      <div class="etq" style="margin-top:10px">2. Aviso de segurança na primeira vez</div>
+      <p class="texto fraco" style="margin:4px 0 0">Toque em "Avançado" e depois "Continuar". É normal: a página é do seu próprio PC.</p>
+      <div class="etq" style="margin-top:10px">3. Escolha a voz e grave</div>
+      <div class="etq" style="margin-top:10px">4. Para virar ícone no celular</div>
+      <p class="texto fraco" style="margin:4px 0 0">Com a página aberta: menu do navegador (⋮ ou o botão de compartilhar) e "Adicionar à tela inicial". O endereço não muda mais.</p>
+      <p class="texto mono" id="cel-url" style="margin:10px 0 0;font-size:12px;word-break:break-all;user-select:text"></p>
+    </div>
+  </div>
+  <button class="chave" id="cel-auto" role="switch" aria-checked="false" style="margin-top:12px"><i></i>Ligar sozinha quando o app abrir</button>
+  <div class="linha" style="margin-top:14px">
+    <button class="tecla forte" id="cel-ligar">Ligar</button>
+    <span class="texto fraco" id="cel-aviso" style="margin:0">Se o Windows perguntar sobre o firewall, permita em rede privada.</span>
+  </div>
+</dialog>
+
+<dialog id="dlg-modelos" class="painel largo">
+  <div class="mod-cab"><span class="etq">Modelos de voz</span><button class="x" data-fechar aria-label="Fechar">×</button></div>
+  <div class="md-abas" role="tablist">
+    <button class="md-aba on" data-md="biblioteca" role="tab">Biblioteca</button>
+    <button class="md-aba" data-md="baixar" role="tab">Baixar novos</button>
+  </div>
+
+  <div id="md-biblioteca">
+    <div class="md-filtros" id="md-filtros"></div>
+    <div class="md-modelos" id="md-modelos"></div>
+    <div class="linha" style="margin-top:12px">
+      <input class="campo" id="md-nova-pasta" type="text" maxlength="40" spellcheck="false" placeholder="pasta nova (ex.: E-girl, Dublagem, Para cantar)">
+      <button class="tecla p" id="md-criar-pasta">Criar pasta</button>
+      <button class="tecla p" id="md-apagar-pasta" hidden>Apagar esta pasta</button>
+    </div>
+    <p class="texto fraco" style="margin:10px 0 0">A organização fica só no app; os arquivos continuam onde estão no Applio. Favoritos e pastas aparecem primeiro nas listas de modelo.</p>
+  </div>
+
+  <div id="md-baixar-painel" hidden>
+    <p class="texto fraco">Cole a lista de modelos (JSON, ou só os links, um por linha). O app baixa do Hugging Face, tira do pacote só a voz e o índice e instala no Applio, em pasta sem acento. Só aceita links <span class="mono">https://huggingface.co/…</span>. Baixe apenas de quem você confia.</p>
+    <textarea class="campo mono" id="md-lista" rows="9" spellcheck="false" placeholder='[
+  { "nome": "marceline", "zip": "https://huggingface.co/…/modelo.zip", "altura": "aguda", "lingua": "es", "pasta": "Dublagem latina" },
+  { "nome": "latina", "pth": "https://huggingface.co/…/model.pth", "index": "https://huggingface.co/…/model.index", "altura": "aguda" }
+]'></textarea>
+    <div class="md-andamento" id="md-andamento"></div>
+    <div class="linha" style="margin-top:12px">
+      <button class="tecla forte p" id="md-baixar">Baixar e instalar</button>
+      <button class="tecla p" id="md-cancelar" hidden>Cancelar</button>
+      <span class="texto fraco" id="md-aviso" style="margin:0"></span>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlg-aovivo" class="painel">
+  <div class="mod-cab"><span class="etq">Voz ao vivo</span><button class="x" data-fechar aria-label="Fechar">×</button></div>
+  <p class="texto fraco">Você fala no microfone e sai na voz do modelo. Use fone de ouvido: com caixa de som o microfone pega a própria saída e apita.</p>
+  <div class="grade">
+    <label class="etq">Microfone
+      <select class="campo" id="av-entrada"></select>
+    </label>
+    <label class="etq">Saída
+      <select class="campo" id="av-saida"></select>
+    </label>
+    <label class="etq">Modelo de voz
+      <select class="campo" id="av-modelo"></select>
+    </label>
+    <label class="etq">Qualidade
+      <select class="campo" id="av-bloco">
+        <option value="150">rápida (menos atraso)</option>
+        <option value="250">equilibrada</option>
+        <option value="400">melhor (mais atraso)</option>
+      </select>
+    </label>
+  </div>
+  <div class="regua" style="margin-top:16px"><span class="etq">Tom da voz (semitons): muda na hora</span><input type="range" id="av-tom" min="-24" max="24" step="1" value="0" aria-label="Tom da voz ao vivo"><output id="av-tom-v">0</output></div>
+  <div class="av-retorno">
+    <button class="chave" id="av-retorno" role="switch" aria-checked="false"><i></i>Retorno: me ouvir em</button>
+    <select class="campo" id="av-retorno-em" aria-label="Aparelho do retorno"></select>
+  </div>
+  <button class="chave" id="av-micro" role="switch" aria-checked="true" style="margin-top:12px"><i></i>Todos os programas ouvem só a voz trocada (o app cuida do microfone do Windows)</button>
+  <div class="av-visor">
+    <span class="lamp" id="av-lamp"></span>
+    <span id="av-estado">desligada</span>
+    <div class="av-vu"><i id="av-vu"></i></div>
+  </div>
+  <div class="linha" style="margin-top:14px">
+    <button class="tecla forte" id="av-ligar">Ligar</button>
+    <button class="tecla" id="av-testar" disabled title="Grava 8 segundos da sua voz já trocada e toca de volta">Testar voz</button>
+    <span class="texto fraco" id="av-aviso" style="margin:0">Fechar esta janela não desliga a voz.</span>
+  </div>
+</dialog>
+
+<dialog id="dlg-frases" class="painel">
+  <div class="mod-cab"><span class="etq" id="fr-titulo">Tons por frase</span><button class="x" data-fechar aria-label="Fechar">×</button></div>
+  <p class="texto fraco" id="fr-dica">Clique num tom para ouvir a frase nele e deixar escolhido. "Aplicar" refaz só a emenda, na hora.</p>
+  <div class="frases" id="fr-lista"></div>
+  <div class="linha" style="margin-top:14px">
+    <button class="tecla forte p" id="fr-aplicar">Aplicar</button>
+    <button class="tecla p" id="fr-parar">Parar o som</button>
+    <span class="texto fraco" id="fr-aviso" style="margin:0"></span>
+  </div>
+</dialog>
+
+<dialog id="dlg-letra" class="painel largo">
+  <div class="mod-cab"><span class="etq">Pedir letra</span><button class="x" data-fechar aria-label="Fechar">×</button></div>
+  <p class="texto fraco">O programa monta o pedido; quem escreve é o Claude ou o ChatGPT, na sua conta. Nada de chave nem custo extra.</p>
+  <div class="grade tres">
+    <label class="etq">Idioma
+      <select class="campo" id="lt-idioma"><option>português do Brasil</option><option>inglês</option><option>espanhol</option></select>
+    </label>
+    <label class="etq">Clima
+      <input class="campo" id="lt-clima" type="text" placeholder="engraçada, triste, épica…">
+    </label>
+    <label class="etq">Duração
+      <input class="campo mono" id="lt-duracao" type="text" value="2:00">
+    </label>
+  </div>
+  <label class="etq rot" for="lt-tema">Sobre o que é a música</label>
+  <textarea class="campo" id="lt-tema" rows="3" placeholder="ex.: um robô que se apaixona por uma torradeira e descobre que ela só queria o pão"></textarea>
+  <div class="linha" style="margin-top:12px">
+    <button class="tecla forte p" id="lt-copiar">1. Copiar o pedido</button>
+    <button class="tecla p" id="lt-claude">2. Abrir o Claude</button>
+    <button class="tecla p" id="lt-chatgpt">ou o ChatGPT</button>
+    <span class="texto fraco" id="lt-aviso" style="margin:0"></span>
+  </div>
+  <label class="etq rot" for="lt-volta">3. Cole aqui a letra que voltou</label>
+  <textarea class="campo" id="lt-volta" rows="9" spellcheck="false" placeholder="Ctrl+V"></textarea>
+  <div class="linha" style="margin-top:12px">
+    <button class="tecla forte p" id="lt-usar">Usar esta letra</button>
+    <details style="margin:0"><summary class="etq">Ver o pedido</summary><pre class="registro" id="lt-previa" style="margin:8px 0 0;max-height:150px;overflow:auto"></pre></details>
+  </div>
+</dialog>
+
+<!-- ============================ VOZ (APPLIO) ============================ -->
+<dialog id="dlg-voz" class="painel largo">
+  <div class="mod-cab"><span class="etq">Voz (Applio)</span><button class="x" data-fechar aria-label="Fechar">×</button></div>
+  <div class="linha"><button class="tecla p" id="vz-pasta">Pasta do Applio</button><span class="texto fraco" id="vz-info" style="margin:0">não encontrado</span></div>
+  <div id="voz-slot-dlg" style="margin-top:14px">
+    <div class="vz-ess" id="vz-essenciais">
+      <div class="vz-mod">
+        <label class="etq">Modelo de voz
+          <select class="campo" id="vz-modelo"></select>
+        </label>
+        <label class="etq">Altura da voz do modelo
+          <select class="campo" id="vz-altura"></select>
+        </label>
+        <label class="etq">Segundo modelo <span class="dica">opcional: sai uma faixa de cada</span>
+          <select class="campo" id="vz-modelo2"></select>
+        </label>
+        <label class="etq" id="vz-altura2-linha" hidden>Altura da voz do segundo
+          <select class="campo" id="vz-altura2"></select>
+        </label>
+      </div>
+      <div class="etq rot">Tom</div>
+      <div class="chaves" id="vz-chaves-tom"></div>
+      <label class="etq" id="vz-tomExtra-linha">Tom da faixa extra
+        <select class="campo" id="vz-tomExtra"></select>
+      </label>
+      <div class="etq rot">Limpeza do vocal</div>
+      <div class="chaves" id="vz-chaves-limpeza"></div>
+      <div class="etq rot">Acabamento</div>
+      <div class="chaves" id="vz-chaves-acabamento"></div>
+    </div>
+  </div>
+  <div class="grade" style="margin-top:14px">
+    <label class="etq">Leitura de tom
+      <select class="campo" id="vz-f0"></select>
+    </label>
+    <label class="etq">Embedder
+      <select class="campo" id="vz-embedder"></select>
+    </label>
+  </div>
+  <div class="reguas" id="vz-reguas"></div>
+  <div class="vz-chaves" id="vz-chaves"></div>
+  <div class="linha" style="margin-top:14px">
+    <button class="tecla p" id="vz-padrao">Voltar aos padrões</button>
+    <span class="texto fraco" style="margin:0">Efeitos (reverb, compressor…) ficam de fora: a voz sai limpa pro FL Studio.</span>
+  </div>
+</dialog>
+
+<!-- ============================ PARTITURA ============================ -->
+<dialog id="dlg-partitura" class="painel largo">
+  <div class="mod-cab"><span class="etq">Partitura</span><button class="x" data-fechar aria-label="Fechar">×</button></div>
+  <div class="folha" id="pt-folha"></div>
+  <details>
+    <summary class="etq">Editar texto ABC</summary>
+    <textarea class="campo mono" id="pt-abc" rows="10" spellcheck="false"></textarea>
+  </details>
+  <div class="linha" style="margin-top:12px">
+    <button class="tecla p" id="pt-desenhar">Redesenhar</button>
+    <button class="tecla p" id="pt-salvar">Salvar .abc</button>
+    <button class="tecla forte p" id="pt-usar">Usar esta partitura na próxima gravação</button>
+  </div>
+</dialog>
+
+<script src="../node_modules/abcjs/dist/abcjs-basic-min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
