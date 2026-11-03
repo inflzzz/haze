@@ -299,7 +299,11 @@
 <main id="tab-separar" class="tela coluna" hidden>
   <section class="modulo estreito">
     <div class="mod-cab"><span class="etq">Separar vocal</span><span class="lamp" id="lamp-sep"></span></div>
-    <p class="texto">Separa a voz do instrumental de qualquer música. Usa o mesmo modelo do UVR5 (MDX-Net Inst HQ 3). Saída em WAV.</p>
+    <p class="texto">Separa qualquer música em faixas WAV. <b>Voz e instrumental</b> usa o mesmo modelo do UVR5 (MDX-Net Inst HQ 3). <b>Por instrumento</b> separa em voz, bateria, baixo, guitarra, piano e o resto (Demucs).</p>
+    <div class="modos" id="sep-modo" role="tablist" style="margin-bottom:14px">
+      <button class="modo on" data-sep="vocal" role="tab">Voz e instrumental</button>
+      <button class="modo" data-sep="instrumentos" role="tab">Por instrumento (6 faixas)</button>
+    </div>
     <div class="linha">
       <button class="tecla" id="btn-sep-arquivo">Escolher arquivo</button>
       <span class="texto fraco" id="sep-arquivo">nenhum arquivo</span>
@@ -444,7 +448,17 @@
   <div class="mod-cab"><span class="etq">Modelos de voz</span><button class="x" data-fechar aria-label="Fechar">×</button></div>
   <div class="md-abas" role="tablist">
     <button class="md-aba on" data-md="biblioteca" role="tab">Biblioteca</button>
-    <button class="md-aba" data-md="baixar" role="tab">Baixar novos</button>
+    <button class="md-aba" data-md="procurar" role="tab">Procurar</button>
+    <button class="md-aba" data-md="baixar" role="tab">Baixar por link</button>
+  </div>
+
+  <div id="md-procurar" hidden>
+    <div class="linha">
+      <input class="campo" id="md-termo" type="text" maxlength="80" spellcheck="false" placeholder="nome da voz: anitta, marilia, miku, e-girl…" style="flex:1">
+      <button class="tecla forte p" id="md-procurar-ir">Procurar</button>
+    </div>
+    <p class="texto fraco" style="margin:8px 0 0">Procura no Hugging Face e mostra só os que têm voz pronta pro Applio. Os mais baixados vêm primeiro. Baixe só de quem você confia.</p>
+    <div class="md-resultados" id="md-resultados"></div>
   </div>
 
   <div id="md-biblioteca">

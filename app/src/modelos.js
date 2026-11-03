@@ -147,4 +147,47 @@ async function instalar(item, applioDir, tmpRaiz, aviso, sinal) {
   }
 }
 
-module.exports = { lerLista, instalar, instalarDaPasta, nomeSeguro, linkAceito };
+// Procura modelos no Hugging Face pelo nome do repositório e devolve só os que têm voz pronta
+// (.zip ou .pth). Repositório com muitos arquivos (coleção) mostra só os arquivos com o termo no nome.
+const semAcento = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const linkHf = (repo, f) => `https://huggingface.co/${repo}/resolve/main/${f.split('/').map(encodeURIComponent).join('/')}`;
+// Nome para instalar: o do arquivo sem "- Weights.gg Model" e afins; se for genérico ("model"), o do repositório.
+function nomeDoArquivo(arquivo, repo) {
+  let n = arquivo.split('/').pop().replace(/\.(zip|pth)$/i, '').replace(/[\s_-]*(weights(\.gg)?|rvc\s*v?2?)?[\s_-]*model$/i, '').trim();
+  if (!n || /^(model|modelo|voice|voz|added|final)$/i.test(n) || n.length < 3) n = repo.split('/').pop();
+  return nomeSeguro(n.replace(/[\s_-]+rvc[\s_-]*v?\d*$/i, ''));
+}
+async function procurar(termo) {
+  const t = String(termo || '').trim().slice(0, 80);
+  if (!t) return { itens: [] };
+  const url = `https://huggingface.co/api/models?search=${encodeURIComponent(t)}&sort=downloads&direction=-1&limit=80&full=true`;
+  const r = await fetch(url, { headers: { 'User-Agent': 'Haze' } });
+  if (!r.ok) throw new Error('o Hugging Face respondeu ' + r.status);
+  const lista = await r.json();
+  const itens = [];
+  for (const m of Array.isArray(lista) ? lista : []) {
+    const files = (m.siblings || []).map((s) => s.rfilename);
+    const opcoes = [];
+    for (const z of files.filter((f) => /\.zip$/i.test(f))) opcoes.push({ arquivo: z, zip: linkHf(m.id, z) });
+    const vozes = files.filter((f) => /\.pth$/i.test(f) && !/^[GD]_|^f0[GD]|pretrain|hubert|rmvpe|contentvec/i.test(f.split('/').pop()));
+    // .pth solto só conta como voz RVC se o repositório tiver índice ou se disser que é RVC
+    const pareceRvc = files.some((f) => /\.index$/i.test(f)) || /rvc/i.test(m.id) || (m.tags || []).some((x) => /rvc/i.test(x));
+    for (const p of pareceRvc ? vozes : []) {
+      const dir = p.includes('/') ? p.slice(0, p.lastIndexOf('/') + 1) : '';
+      const idx = files.find((f) => /\.index$/i.test(f) && f.startsWith(dir) && !f.slice(dir.length).includes('/'))
+        || (vozes.length === 1 ? files.find((f) => /\.index$/i.test(f)) : null);
+      opcoes.push({ arquivo: p, pth: linkHf(m.id, p), index: idx ? linkHf(m.id, idx) : '' });
+    }
+    if (!opcoes.length) continue;
+    let escolhidas = opcoes.length > 6 ? opcoes.filter((o) => semAcento(o.arquivo).includes(semAcento(t))) : opcoes;
+    if (!escolhidas.length) escolhidas = opcoes.slice(0, 6);
+    itens.push({
+      repo: m.id, downloads: m.downloads || 0, likes: m.likes || 0, total: opcoes.length,
+      opcoes: escolhidas.slice(0, 8).map((o) => ({ ...o, nome: nomeDoArquivo(o.arquivo, m.id) })),
+    });
+    if (itens.length >= 30) break;
+  }
+  return { itens };
+}
+
+module.exports = { lerLista, instalar, instalarDaPasta, nomeSeguro, linkAceito, procurar };

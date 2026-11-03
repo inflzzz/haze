@@ -258,6 +258,7 @@ ipcMain.handle('gerar', (_e, { dir, opts }) => guarded((ctl) => pipeline.generat
 ipcMain.handle('separar-variacao', (_e, { dir, index }) =>
   guarded((ctl) => pipeline.separateTake(dir, index, progresso, ctl)));
 ipcMain.handle('separar-arquivo', (_e, file) => guarded((ctl) => pipeline.separateOnly(file, progresso, ctl)));
+ipcMain.handle('separar-instrumentos', (_e, file) => guarded((ctl) => pipeline.separarInstrumentos(file, progresso, ctl)));
 ipcMain.handle('so-voz', (_e, opts) => guarded((ctl) => pipeline.soVoz(opts, progresso, ctl)));
 ipcMain.handle('falar', (_e, opts) => guarded((ctl) => pipeline.falar(opts, progresso, ctl)));
 // vozes do leitor local; a lista só é lida uma vez
@@ -304,6 +305,9 @@ ipcMain.handle('escolher-pasta-applio', async () => {
 const modelos = require('./src/modelos');
 let baixandoModelos = null;   // AbortController do download em andamento
 ipcMain.handle('modelos-conferir', (_e, texto) => modelos.lerLista(texto));
+ipcMain.handle('modelos-procurar', async (_e, termo) => {
+  try { return { ok: true, ...(await modelos.procurar(termo)) }; } catch (e) { return { ok: false, error: e.message }; }
+});
 
 // ---------- IPC: voz pelo celular ----------
 // Uma página na rede de casa: o celular grava, o PC troca a voz e devolve o áudio pronto para compartilhar.
@@ -919,6 +923,12 @@ ipcMain.handle('karaoke-recentes', () => {
 // só abre os dois endereços conhecidos, nunca um link vindo da página
 const SITES = { claude: 'https://claude.ai/new', chatgpt: 'https://chatgpt.com/' };
 ipcMain.handle('abrir-site', (_e, qual) => { if (SITES[qual]) shell.openExternal(SITES[qual]); return !!SITES[qual]; });
+// página de um modelo achado na busca: só abre endereço do Hugging Face
+ipcMain.handle('abrir-hf', (_e, url) => {
+  const ok = modelos.linkAceito(String(url || ''));
+  if (ok) shell.openExternal(url);
+  return ok;
+});
 ipcMain.handle('mostrar-na-pasta', (_e, p) => { shell.showItemInFolder(p); return true; });
 ipcMain.handle('abrir-pasta-saida', () => shell.openPath(paths.outDir));
 

@@ -109,7 +109,7 @@ const ehModo = (...m) => m.includes(state.modoMesa);
 
 function aplicarModo() {
   const m = state.modoMesa;
-  document.querySelectorAll('.modo').forEach((x) => {
+  document.querySelectorAll('#modos .modo').forEach((x) => {
     x.classList.toggle('on', x.dataset.modo === m);
     x.setAttribute('aria-selected', String(x.dataset.modo === m));
   });
@@ -153,7 +153,7 @@ function aplicarInstrumental() {
     $('letra-nota').textContent = 'vazia = reconhecer sozinho';
   }
 }
-document.querySelectorAll('.modo').forEach((b) =>
+document.querySelectorAll('#modos .modo').forEach((b) =>
   b.addEventListener('click', () => {
     if (state.rodando || b.dataset.modo === state.modoMesa) return;
     state.tomPorModo[state.modoMesa] = state.tom;
@@ -733,8 +733,50 @@ document.querySelectorAll('.md-aba').forEach((b) => b.addEventListener('click', 
   document.querySelectorAll('.md-aba').forEach((x) => x.classList.toggle('on', x === b));
   $('md-biblioteca').hidden = b.dataset.md !== 'biblioteca';
   $('md-baixar-painel').hidden = b.dataset.md !== 'baixar';
+  $('md-procurar').hidden = b.dataset.md !== 'procurar';
   if (b.dataset.md === 'biblioteca') pintarBiblioteca();
+  if (b.dataset.md === 'procurar') setTimeout(() => $('md-termo').focus(), 0);
 }));
+
+// ---------- procurar modelos no Hugging Face ----------
+const instaladosPorNome = () => new Set(((state.config && state.config.modelos) || []).map((m) => String(m.pastaNome || m.nome || '').toLowerCase()));
+async function procurarModelos() {
+  const termo = $('md-termo').value.trim();
+  const box = $('md-resultados');
+  if (!termo) return;
+  box.replaceChildren(el('div', { class: 'vazio', text: 'Procurando…' }));
+  $('md-procurar-ir').disabled = true;
+  const r = await api.modelosProcurar(termo);
+  $('md-procurar-ir').disabled = false;
+  box.replaceChildren();
+  if (!r.ok) return box.append(el('div', { class: 'vazio', text: 'Não consegui procurar: ' + r.error }));
+  if (!r.itens.length) return box.append(el('div', { class: 'vazio', text: `Nada com voz pronta para "${termo}". Tente outro jeito de escrever (sem espaço, só o primeiro nome).` }));
+  const ja = instaladosPorNome();
+  for (const it of r.itens) {
+    const cab = el('div', { class: 'md-res-cab' },
+      el('span', { class: 'mono', text: it.repo }),
+      el('span', { class: 'fraco', text: (it.downloads ? '↓ ' + it.downloads + ' no mês' : 'pouco baixado') + (it.total > it.opcoes.length ? ` · ${it.total} vozes, mostrando as com "${termo}"` : '') }),
+      el('button', { class: 'tecla p', text: 'Página', title: 'Abrir a página no navegador', onclick: () => api.abrirHf('https://huggingface.co/' + it.repo) }));
+    const linhas = it.opcoes.map((o) => {
+      const tem = ja.has(o.nome.toLowerCase());
+      return el('div', { class: 'md-res-linha' },
+        el('span', { text: o.nome }),
+        el('span', { class: 'fraco', text: (o.zip ? 'pacote .zip' : 'voz .pth' + (o.index ? ' + índice' : ' sem índice')) }),
+        el('button', { class: 'tecla p' + (tem ? '' : ' forte'), text: tem ? 'Já tenho' : 'Baixar', disabled: tem,
+          onclick: () => baixarDaBusca(o) }));
+    });
+    box.append(el('div', { class: 'md-res' }, cab, ...linhas));
+  }
+}
+// Baixar pela busca usa o mesmo caminho da lista colada: mostra o andamento na aba "Baixar por link".
+function baixarDaBusca(o) {
+  const item = o.zip ? { nome: o.nome, zip: o.zip } : { nome: o.nome, pth: o.pth, ...(o.index ? { index: o.index } : {}) };
+  $('md-lista').value = JSON.stringify([item], null, 2);
+  document.querySelector('.md-aba[data-md="baixar"]').click();
+  $('md-baixar').click();
+}
+$('md-procurar-ir').addEventListener('click', procurarModelos);
+$('md-termo').addEventListener('keydown', (e) => { if (e.key === 'Enter') procurarModelos(); });
 $('md-criar-pasta').addEventListener('click', () => {
   const nome = $('md-nova-pasta').value.trim().slice(0, 40);
   const pastas = state.config.pastas || [];
@@ -1988,6 +2030,12 @@ $('btn-pasta-saida').addEventListener('click', () => api.abrirPastaSaida());
 
 // ---------- separar vocal (avulso) ----------
 let sepArquivo = null;
+let sepModo = 'vocal';
+document.querySelectorAll('#sep-modo [data-sep]').forEach((b) => b.addEventListener('click', () => {
+  if (state.rodando) return;
+  sepModo = b.dataset.sep;
+  document.querySelectorAll('#sep-modo [data-sep]').forEach((x) => x.classList.toggle('on', x === b));
+}));
 $('btn-sep-arquivo').addEventListener('click', async () => {
   const p = await api.escolherAudio();
   if (!p) return;
@@ -2007,7 +2055,8 @@ $('btn-sep-ir').addEventListener('click', async () => {
   $('lamp-sep').className = 'lamp pisca';
   state.modo = 'sep';
   state.rodando = true;
-  const r = await api.separarArquivo(sepArquivo);
+  const porInstrumento = sepModo === 'instrumentos';
+  const r = porInstrumento ? await api.separarInstrumentos(sepArquivo) : await api.separarArquivo(sepArquivo);
   state.rodando = false;
   state.modo = 'mesa';
   $('btn-sep-ir').disabled = false;
@@ -2021,7 +2070,16 @@ $('btn-sep-ir').addEventListener('click', async () => {
     return;
   }
   $('lamp-sep').className = 'lamp sinal';
-  for (const [nome, file] of [['Vocal', r.data.stems.vocals], ['Instrumental', r.data.stems.instrumental]]) {
+  const faixas = porInstrumento ? r.data.faixas.map((f) => [f.nome, f.file])
+    : [['Vocal', r.data.stems.vocals], ['Instrumental', r.data.stems.instrumental]];
+  if (porInstrumento) {
+    const tudo = el('button', { class: 'tecla p extra', text: 'Arrastar todas as faixas', draggable: 'true',
+      title: 'Segure e arraste para o FL Studio: vão as ' + faixas.length + ' faixas juntas' });
+    tudo.addEventListener('dragstart', (e) => { e.preventDefault(); api.arrastar(faixas.map(([, f]) => f)); });
+    tudo.addEventListener('click', () => api.mostrarNaPasta(faixas[0][1]));
+    $('sep-canais').append(el('div', { class: 'linha', style: 'margin:10px 0' }, tudo));
+  }
+  for (const [nome, file] of faixas) {
     const root = novoCanal(nome);
     $('sep-canais').append(root);
     new Canal(root).set(file);

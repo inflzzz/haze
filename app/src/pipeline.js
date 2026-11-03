@@ -1589,6 +1589,45 @@ async function separateOnly(file, onEvent, ctl = {}) {
   return { dir, stems };
 }
 
+// Separa por instrumento com o Demucs de 6 faixas: voz, bateria, baixo, guitarra, piano e o resto.
+// O modelo (~50 MB) baixa sozinho na primeira vez, na pasta dos modelos de separação.
+const INSTRUMENTOS = [
+  ['Vocals', 'voz', 'Voz'], ['Drums', 'bateria', 'Bateria'], ['Bass', 'baixo', 'Baixo'],
+  ['Guitar', 'guitarra', 'Guitarra'], ['Piano', 'piano', 'Piano'], ['Other', 'outros', 'Outros'],
+];
+async function separarInstrumentos(file, onEvent, ctl = {}) {
+  need(paths.separator, 'o separador de vocal (sep-env)');
+  const novo = newJobDir();
+  const titulo = path.basename(file, path.extname(file));
+  const dir = nomearPasta(novo.dir, novo.id, titulo + ' por instrumento');
+  const job = new Job(dir, onEvent);
+  ctl.job = job;
+  const tmp = path.join(work(dir), 'instrumentos');
+  fs.mkdirSync(tmp, { recursive: true });
+  job.emit('separar', 0, 'Separando por instrumento (na primeira vez baixa o modelo)…');
+  await run(job, paths.separator, [
+    file, '--model_filename', 'htdemucs_6s.yaml', '--model_file_dir', paths.separatorModelsDir,
+    '--output_dir', tmp, '--output_format', 'WAV',
+  ], {
+    onLine: (l) => {
+      const m = l.match(/(\d+)%\|/);
+      if (m) job.emit('separar', parseInt(m[1], 10), 'Separando por instrumento…');
+    },
+  });
+  const arquivos = fs.readdirSync(tmp);
+  const faixas = [];
+  for (const [chave, nome, rotulo] of INSTRUMENTOS) {
+    const achado = arquivos.find((f) => f.includes(`(${chave})`));
+    if (!achado) continue;
+    const destino = path.join(dir, `${limpo(titulo)} (${nome}).wav`);
+    fs.renameSync(path.join(tmp, achado), destino);
+    faixas.push({ nome: rotulo, file: destino });
+  }
+  if (!faixas.length) throw new Error('O separador não gerou as faixas por instrumento.');
+  saveMeta(dir, { id: novo.id, status: 'pronto', title: titulo, source: file, faixas, kind: 'instrumentos' });
+  return { dir, faixas };
+}
+
 // ---------- melodia e acordes em MIDI (src/midi.py, no sep-env) ----------
 // Da voz separada sai a melodia; do instrumental, o andamento e os acordes. O .mid fica na pasta da música.
 async function midi(dir, n, onEvent, ctl = {}) {
@@ -1614,7 +1653,7 @@ async function midi(dir, n, onEvent, ctl = {}) {
 }
 
 module.exports = {
-  midi,
+  midi, separarInstrumentos,
   analyze, generate, planejar, compor, continuar, separateTake, trocarVoz, reemendar, amostra, soVoz, falar, separateOnly,
   karaoke, karaokeLetra, karaokeMelodia, karaokeTom, saveMeta, readMeta,
   Job, Cancelled, formatLyrics, newJobDir, limpo, indiceSeguro,

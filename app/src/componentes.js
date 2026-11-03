@@ -220,7 +220,7 @@ const COMPONENTES = [
       log('Instalando o separador e as ferramentas de áudio…');
       await pip(log, py, [backend.startsWith('cu') ? 'audio-separator[gpu]' : 'audio-separator[cpu]',
         'audioread', 'pedalboard', 'sounddevice', 'librosa', 'soundfile', 'scipy', 'psutil']);
-      for (const m of [separator.model, separator.vocalModel, separator.ecoModel, separator.coroModel]) {
+      for (const m of [separator.model, separator.vocalModel, separator.ecoModel, separator.coroModel, 'htdemucs_6s.yaml']) {
         log('Baixando o modelo de separação ' + m + '…');
         await rodar(log, paths.separator, ['--model_filename', m, '--model_file_dir', paths.separatorModelsDir, '--download_model_only']);
       }

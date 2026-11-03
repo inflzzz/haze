@@ -60,10 +60,11 @@ O microfone entra e sai a voz do modelo, em tempo real. Com um cabo de áudio vi
 Abra a página do Haze no celular (QR code), grave um áudio e receba de volta com a voz trocada, pronto pra mandar no WhatsApp **como mensagem de voz**. Dá também pra pedir uma música por link ou escrever um texto pra ele falar.
 
 ### 📚 Biblioteca de modelos
-Baixe modelos de voz do Hugging Face colando os links. Organize em pastas, por língua e favoritos, dê apelidos e ouça uma amostra ▶ de cada um.
+Digite o nome de uma voz (tipo "marilia" ou "miku") e o Haze procura no Hugging Face. Ele mostra só os modelos prontos pro Applio, com botão de baixar. Também dá pra colar links. Organize em pastas, por língua e favoritos, dê apelidos e ouça uma amostra ▶ de cada um.
 
-### ✂️ Separar vocal
-Voz e instrumental de qualquer música, com os mesmos modelos do UVR5 (MDX-Net e Mel-Band RoFormer).
+### ✂️ Separar vocal e instrumentos
+- **Voz e instrumental**, com os mesmos modelos do UVR5 (MDX-Net e Mel-Band RoFormer)
+- **Por instrumento**: voz, bateria, baixo, guitarra, piano e o resto, cada um numa faixa (Demucs). Arraste todas de uma vez pro FL Studio
 
 ### 🎹 Melodia e acordes em MIDI
 Um clique tira a melodia da voz e os acordes do instrumental num `.mid`, já no andamento da música. Arraste o botão direto pro FL Studio: sai uma faixa pra melodia e outra pros acordes.

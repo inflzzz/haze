@@ -427,6 +427,12 @@ dialog .vz-ess .chaves { grid-row: 2; }
 .md-linha .mono { font-family: var(--mono); color: var(--serigrafia); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .md-linha .ok { color: var(--verde); }
 .md-linha .ruim { color: var(--vermelho); }
+.md-resultados { margin-top: 12px; max-height: 46vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.md-res { background: var(--sulco); border-radius: 4px; padding: 8px 10px; }
+.md-res-cab { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding-bottom: 6px; border-bottom: 1px solid #3b352f; }
+.md-res-cab .mono { font-family: var(--mono); color: var(--serigrafia); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md-res-cab .fraco, .md-res-linha .fraco { color: var(--aco); font-size: 12px; }
+.md-res-linha { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 6px 0 0; font-size: 13px; }
 
 /* ---------- biblioteca de modelos ---------- */
 .md-abas { display: flex; gap: 4px; margin-bottom: 14px; background: var(--sulco); border-radius: 4px; padding: 3px; width: max-content; }
