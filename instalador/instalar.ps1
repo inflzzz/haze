@@ -1,6 +1,13 @@
 ﻿# Instalador do Haze: copia o app para uma pasta, cria os atalhos e abre o app.
 # As IAs não vêm aqui: cada uma é baixada pelo próprio app, na aba Instalar, na versão certa pra placa de vídeo.
 $ErrorActionPreference = 'Stop'
+# qualquer erro aparece na tela e espera o Enter, em vez de a janela sumir
+trap {
+  Write-Host ''
+  Write-Host ('Deu erro: ' + $_.Exception.Message) -ForegroundColor Red
+  Read-Host 'Enter para sair'
+  exit 1
+}
 $origem = Join-Path $PSScriptRoot 'Haze'
 
 Write-Host ''

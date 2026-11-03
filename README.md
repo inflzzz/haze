@@ -77,7 +77,7 @@ O Haze avisa quando sai uma versão nova e se atualiza com um clique, sem apagar
 ## 📥 Como instalar
 
 1. Baixe o **`Haze-instalador.zip`** na [página de downloads](https://github.com/inflzzz/haze/releases/latest) (~350 MB).
-2. Extraia o .zip e dê dois cliques em **`Instalar Haze.cmd`**.
+2. **Extraia o .zip antes**: clique com o botão direito nele e escolha **Extrair tudo…**. Depois abra a pasta extraída e dê dois cliques em **`Instalar Haze.cmd`**. Rodar direto de dentro do .zip não funciona.
 3. O Haze abre na aba **Instalar**. Escolha só as funções que você vai usar: cada uma baixa o que precisa.
 
 <p align="center">
