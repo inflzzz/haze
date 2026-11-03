@@ -168,10 +168,18 @@ async function procurar(termo) {
   for (const m of Array.isArray(lista) ? lista : []) {
     const files = (m.siblings || []).map((s) => s.rfilename);
     const opcoes = [];
-    for (const z of files.filter((f) => /\.zip$/i.test(f))) opcoes.push({ arquivo: z, zip: linkHf(m.id, z) });
+    const tags = (m.tags || []).join(' ');
+    // diz que é RVC: tem índice, ou "rvc" no nome ou nas etiquetas
+    const pareceRvc = files.some((f) => /\.index$/i.test(f)) || /rvc/i.test(m.id) || /rvc/i.test(tags);
+    // arquivos de outras IAs (texto, imagem, LoRA): repositório assim só entra se disser que é RVC
+    const outraIa = /lora|peft|diffusers|transformers|gguf|text-generation|text-to-image|stable-diffusion/i.test(tags)
+      || files.some((f) => /(^|\/)(adapter_config|config|tokenizer(_config)?|model_index)\.json$|\.(safetensors|gguf|ckpt|bin)$/i.test(f));
+    const zipRuim = (f) => /lora|adapter|checkpoint|dataset|gguf|safetensors|diffusion|sdxl|lyco/i.test(f.split('/').pop());
+    if (pareceRvc || !outraIa) {
+      for (const z of files.filter((f) => /\.zip$/i.test(f) && !zipRuim(f))) opcoes.push({ arquivo: z, zip: linkHf(m.id, z) });
+    }
     const vozes = files.filter((f) => /\.pth$/i.test(f) && !/^[GD]_|^f0[GD]|pretrain|hubert|rmvpe|contentvec/i.test(f.split('/').pop()));
-    // .pth solto só conta como voz RVC se o repositório tiver índice ou se disser que é RVC
-    const pareceRvc = files.some((f) => /\.index$/i.test(f)) || /rvc/i.test(m.id) || (m.tags || []).some((x) => /rvc/i.test(x));
+    // .pth solto só conta como voz RVC se o repositório disser que é RVC
     for (const p of pareceRvc ? vozes : []) {
       const dir = p.includes('/') ? p.slice(0, p.lastIndexOf('/') + 1) : '';
       const idx = files.find((f) => /\.index$/i.test(f) && f.startsWith(dir) && !f.slice(dir.length).includes('/'))
