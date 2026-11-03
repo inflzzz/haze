@@ -1,4 +1,4 @@
-# Só o programa. Modelos, motor, ambientes Python, músicas e testes se baixam/refazem de novo.
+# Só o código. Modelos, motor compilado, ambientes Python e músicas são baixados ou refeitos pelo app.
 /*
 !/.gitignore
 !/README.md
@@ -6,15 +6,7 @@
 !/docs/
 !/instalador/
 !/app/
-!/memoria-claude/
 !/*.cmd
-!/*.bat
-# ajustes do app (biblioteca de modelos, voz, karaokê, plugins); cache e registros não
-!/.dados-app/
-/.dados-app/*
-!/.dados-app/config.json
-!/.dados-app/presets.json
-!/.dados-app/karaoke-plugins/
 app/node_modules/
 *.log
 __pycache__/
