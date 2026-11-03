@@ -236,7 +236,7 @@ ipcMain.handle('atualizacao-instalar', async () => {
   try {
     const ps = await atualizar.preparar((texto) => send('atualizacao', texto));
     send('atualizacao', 'fechando para trocar os arquivos… o app abre sozinho de novo');
-    setTimeout(() => { atualizar.rodarDepoisDeFechar(ps); app.quit(); }, 1200);
+    setTimeout(async () => { await atualizar.rodarDepoisDeFechar(ps); app.quit(); }, 1200);
     return { ok: true };
   } catch (e) {
     guardarErro('atualizar', e.message);

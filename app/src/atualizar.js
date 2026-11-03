@@ -94,9 +94,20 @@ async function preparar(aviso) {
   return ps;
 }
 
+// O script nasce pelo WMI: assim ele não é filho do app e não morre quando o app fecha
+// (um filho "detached" comum ainda pode ser fechado junto, se o app estiver dentro de um grupo de processos).
 function rodarDepoisDeFechar(ps) {
-  spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', ps],
-    { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+  const linha = `powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "${ps}"`;
+  const cmd = `Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = '${linha.replace(/'/g, "''")}' } | Out-Null`;
+  return new Promise((resolve) => {
+    const p = spawn('powershell', ['-NoProfile', '-Command', cmd], { windowsHide: true, stdio: 'ignore' });
+    p.on('close', resolve);
+    p.on('error', () => {
+      spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', ps],
+        { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+      resolve();
+    });
+  });
 }
 
 module.exports = { verificar, preparar, rodarDepoisDeFechar, versaoAtual, maisNova };
