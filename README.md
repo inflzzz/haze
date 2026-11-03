@@ -22,79 +22,48 @@
 
 ## ✨ O que ele faz
 
-<table>
-<tr>
-<td width="50%" valign="top">
-
 ### 🎙️ Trocar a voz de uma música
 Cole o link do YouTube e escolha um modelo de voz (RVC). O Haze separa a voz do instrumental, tira o coro e o eco e canta a música com a voz do modelo.
+
 - **Dois tons por frase**: o verso grave e o refrão agudo saem cada um na oitava certa, emendados sozinhos
-- Coro também na voz do modelo, silêncio limpo entre as frases, volume igual ao original
+- Coro também na voz do modelo, silêncio limpo entre as frases e volume igual ao original
 - Voz e instrumental saem **em faixas separadas**, prontas pro seu editor (FL Studio, Reaper…)
 - Dois modelos de uma vez: sai uma faixa inteira de cada
 
-</td>
-<td width="50%" valign="top">
-
 ### 🎼 Regravar, criar e continuar músicas
 Com o motor **YuE2**, uma IA que compõe e canta:
+
 - **Regravar**: a música de novo, com outra voz e outro estilo
 - **Criar**: música nova a partir de um estilo e de uma letra (ou só instrumental)
 - **Continuar**: começa com um trecho de música real e a IA compõe o resto
 - Letra e partitura tiradas da música automaticamente (Whisper + SheetSage)
 
-</td>
-</tr>
-<tr>
-<td valign="top">
-
 ### 🗣️ Fala
 Escreva um texto e ele sai falado.
+
 - **Sua voz clonada**: grave de 10 a 20 segundos e ele fala com a sua voz e o seu jeito (Chatterbox: inglês, português, espanhol, francês, italiano, alemão e japonês)
 - **Voz pronta**: vozes leves que rodam até sem placa de vídeo (Kokoro)
 - Dá pra passar a fala depois pelo seu modelo de voz
 
-</td>
-<td valign="top">
-
 ### 🎤 Karaokê
 Uma tela própria: cole o link e cante.
+
 - Letra sincronizada, que rola sozinha
 - Seu microfone passa pelos seus plugins VST3, como Auto-Tune e reverb, com atraso baixo
 - Régua de afinação estilo SingStar, com placar
 - Mude o tom da música e o Auto-Tune acompanha
 
-</td>
-</tr>
-<tr>
-<td valign="top">
-
 ### 🔴 Voz ao vivo
 O microfone entra e sai a voz do modelo, em tempo real. Com um cabo de áudio virtual, ela vai pro Discord, OBS ou jogo. Dá pra trocar de modelo sem desligar.
-
-</td>
-<td valign="top">
 
 ### 📱 Pelo celular
 Abra a página do Haze no celular (QR code), grave um áudio e receba de volta com a voz trocada, pronto pra mandar no WhatsApp **como mensagem de voz**. Dá também pra pedir uma música por link ou escrever um texto pra ele falar.
 
-</td>
-</tr>
-<tr>
-<td valign="top">
-
 ### 📚 Biblioteca de modelos
 Baixe modelos de voz do Hugging Face colando os links. Organize em pastas, por língua e favoritos, dê apelidos e ouça uma amostra ▶ de cada um.
 
-</td>
-<td valign="top">
-
 ### ✂️ Separar vocal
 Voz e instrumental de qualquer música, com os mesmos modelos do UVR5 (MDX-Net e Mel-Band RoFormer).
-
-</td>
-</tr>
-</table>
 
 ---
 
