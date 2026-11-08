@@ -424,7 +424,7 @@ function lerMesa() {
 
 // ---------- Applio (troca de voz) ----------
 // Mesmos controles da tela de inferência do Applio. Padrões iguais aos dele, menos índice 0,55 e proteção 0,20
-// (com 0,75/0,33 o R curto do português sumia no modelo EduCanto; no Applio, proteção menor protege mais).
+// (com 0,75/0,33 o R curto do português sumia nos modelos de voz testados; no Applio, proteção menor protege mais).
 const VOZ_LISTAS = {
   f0: ['rmvpe', 'fcpe', 'crepe', 'crepe-tiny', 'hybrid[crepe+rmvpe]', 'hybrid[crepe+fcpe]', 'hybrid[rmvpe+fcpe]', 'hybrid[crepe+rmvpe+fcpe]'],
   embedder: ['contentvec', 'spin', 'spin-v2', 'chinese-hubert-base', 'japanese-hubert-base', 'korean-hubert-base'],

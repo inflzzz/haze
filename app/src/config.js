@@ -63,8 +63,8 @@ const models = {
   kokoroVozes: path.join(paths.modelsDir, 'kokoro', 'voices-v1.0.bin'),
   // o Chatterbox baixa os pesos sozinho na primeira vez e guarda aqui (inglês ~3 GB, multilíngue ~2 GB)
   chatterboxDir: path.join(paths.modelsDir, 'chatterbox', 'hf'),
-  // gravação de referência que vem pronta: o trecho falado (rap) do dataset do EduCanto
-  referenciaPadrao: path.join(paths.modelsDir, 'chatterbox', 'referencias', 'edu-rap-billionaire.wav'),
+  // gravação de referência padrão (opcional): se existir, a aba Fala usa quando não há gravação própria
+  referenciaPadrao: path.join(paths.modelsDir, 'chatterbox', 'referencias', 'referencia-padrao.wav'),
 };
 
 // Separação de vocal: mesmo modelo e ajustes usados no UVR5
