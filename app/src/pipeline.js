@@ -624,9 +624,9 @@ function argsInfer(voz, entrada, saida) {
     '--f0_autotune_strength', num(voz.autotuneStrength, 1, 0, 1, 1),
     '--clean_audio', sn(voz.cleanAudio),
     '--clean_strength', num(voz.cleanStrength, 0.5, 0, 1, 1),
-    '--formant_shifting', sn(voz.formant),
-    '--formant_qfrency', num(voz.formantQfrency, 1, 0, 16, 1),
-    '--formant_timbre', num(voz.formantTimbre, 1, 0, 16, 1),
+    // o formante do Applio mexe na voz do cantor ANTES de converter, e o modelo apaga quase tudo;
+    // por isso ele fica desligado aqui e é aplicado na voz já convertida (formanteDepois)
+    '--formant_shifting', 'False',
     '--input_path', entrada,
     '--output_path', saida,
     '--pth_path', voz.pth,
@@ -855,11 +855,21 @@ async function acabamento(job, voz, guia, alvo) {
   }
 }
 
+// Chave "Mudar o formante": engrossa ou afina a voz já convertida, sem mudar as notas.
+async function formanteDepois(job, voz, arquivo) {
+  const timbre = Math.min(16, Math.max(0.1, Number(voz.formantTimbre) || 1));
+  if (!voz.formant || Math.abs(timbre - 1) < 0.001) return;
+  const q = Math.min(16, Math.max(0.1, Number(voz.formantQfrency) || 1));
+  await run(job, applioPython(voz.applioDir), ['-I', paths.formanteScript, '--arquivo', arquivo,
+    '--timbre', timbre.toFixed(2), '--quefrencia', q.toFixed(2)]);
+}
+
 // Uma conversão inteira no Applio, num tom, já com o acabamento.
 async function converter(job, voz, tom, entrada, saida) {
   const py = applioPython(voz.applioDir);
   await run(job, py, argsInfer({ ...voz, pitch: tom }, entrada, saida), { cwd: voz.applioDir });
   if (!fs.existsSync(saida)) throw new Error('O Applio terminou sem gerar o arquivo de voz.');
+  await formanteDepois(job, voz, saida);
   await acabamento(job, voz, entrada, saida);
 }
 
@@ -1300,7 +1310,7 @@ async function falar(opts, onEvent, ctl = {}) {
       job.emit('voz', 50, 'Trocando a voz (' + nome + ')…');
       await run(job, applioPython(voz.applioDir), argsInfer(voz, base, final), { cwd: voz.applioDir });
       if (!fs.existsSync(final)) throw new Error('O Applio terminou sem gerar a fala convertida.');
-      estilo = 'fala ' + nome + ' (lida por ' + apelido + ')';
+      await formanteDepois(job, voz, final);      estilo = 'fala ' + nome + ' (lida por ' + apelido + ')';
     }
     saveMeta(dir, {
       id: novo.id, kind: 'fala', title: titulo, covers: [final], lyrics: texto,
@@ -1577,15 +1587,39 @@ async function karaokeTom(dir, semitons, onEvent, ctl = {}) {
   return { instrumental, guia: fs.existsSync(guia) ? guia : m.guia, transpor: s };
 }
 
-// Separa vocal/instrumental de qualquer arquivo de áudio (função avulsa).
-async function separateOnly(file, onEvent, ctl = {}) {
+// A aba "Separar vocal" aceita arquivo do PC ou link, como a mesa.
+function fonteDeSeparacao(origem) {
+  if (typeof origem === 'string' && origem.trim()) return { file: origem };
+  if (origem && origem.file) return { file: origem.file };
+  if (origem && origem.url && origem.url.trim()) return { url: origem.url.trim() };
+  throw new Error('Escolha um arquivo ou cole um link.');
+}
+
+// Com link, baixa primeiro (em wav) e só depois dá o nome da música à pasta.
+async function prepararSeparacao(fonte, onEvent, ctl, sufixo) {
   const novo = newJobDir();
-  const titulo = path.basename(file, path.extname(file));
-  const dir = nomearPasta(novo.dir, novo.id, titulo + ' separada');
-  const job = new Job(dir, onEvent);
+  const job = new Job(novo.dir, onEvent);
   ctl.job = job;
+  let titulo = fonte.file ? path.basename(fonte.file, path.extname(fonte.file)) : '';
+  let baixado = null;
+  if (fonte.url) {
+    const src = await download(job, fonte.url, work(novo.dir), 'wav');
+    job.check();
+    titulo = src.title;
+    baixado = src.name;
+  }
+  const dir = nomearPasta(novo.dir, novo.id, titulo + sufixo);
+  job.setDir(dir);
+  const file = baixado ? path.join(work(dir), baixado) : fonte.file;
+  return { id: novo.id, job, dir, file, titulo };
+}
+
+// Separa vocal/instrumental de qualquer arquivo de áudio (função avulsa).
+async function separateOnly(origem, onEvent, ctl = {}) {
+  const fonte = fonteDeSeparacao(origem);
+  const { id, job, dir, file, titulo } = await prepararSeparacao(fonte, onEvent, ctl, ' separada');
   const stems = await separateNamed(job, dir, file, titulo, 0);
-  saveMeta(dir, { id: novo.id, status: 'pronto', title: titulo, source: file, stems, kind: 'separacao' });
+  saveMeta(dir, { id, status: 'pronto', title: titulo, source: fonte.url || fonte.file, stems, kind: 'separacao' });
   return { dir, stems };
 }
 
@@ -1595,13 +1629,10 @@ const INSTRUMENTOS = [
   ['Vocals', 'voz', 'Voz'], ['Drums', 'bateria', 'Bateria'], ['Bass', 'baixo', 'Baixo'],
   ['Guitar', 'guitarra', 'Guitarra'], ['Piano', 'piano', 'Piano'], ['Other', 'outros', 'Outros'],
 ];
-async function separarInstrumentos(file, onEvent, ctl = {}) {
+async function separarInstrumentos(origem, onEvent, ctl = {}) {
   need(paths.separator, 'o separador de vocal (sep-env)');
-  const novo = newJobDir();
-  const titulo = path.basename(file, path.extname(file));
-  const dir = nomearPasta(novo.dir, novo.id, titulo + ' por instrumento');
-  const job = new Job(dir, onEvent);
-  ctl.job = job;
+  const fonte = fonteDeSeparacao(origem);
+  const { id, job, dir, file, titulo } = await prepararSeparacao(fonte, onEvent, ctl, ' por instrumento');
   const tmp = path.join(work(dir), 'instrumentos');
   fs.mkdirSync(tmp, { recursive: true });
   job.emit('separar', 0, 'Separando por instrumento (na primeira vez baixa o modelo)…');
@@ -1624,7 +1655,7 @@ async function separarInstrumentos(file, onEvent, ctl = {}) {
     faixas.push({ nome: rotulo, file: destino });
   }
   if (!faixas.length) throw new Error('O separador não gerou as faixas por instrumento.');
-  saveMeta(dir, { id: novo.id, status: 'pronto', title: titulo, source: file, faixas, kind: 'instrumentos' });
+  saveMeta(dir, { id, status: 'pronto', title: titulo, source: fonte.url || fonte.file, faixas, kind: 'instrumentos' });
   return { dir, faixas };
 }
 

@@ -204,9 +204,19 @@ document.addEventListener('drop', (e) => {
 document.addEventListener('paste', (e) => {
   const alvo = e.target;
   if (alvo && (alvo.tagName === 'INPUT' || alvo.tagName === 'TEXTAREA' || alvo.isContentEditable)) return;
-  if (document.querySelector('dialog[open]') || state.rodando || state.modoMesa === 'criar') return;
+  if (document.querySelector('dialog[open]') || state.rodando) return;
   const texto = ((e.clipboardData && e.clipboardData.getData('text')) || '').trim();
   if (!/^https?:[/][/][^ ]+$/i.test(texto)) return;
+  // na aba Separar, o link fica lá mesmo
+  if (!$('tab-separar').hidden) {
+    e.preventDefault();
+    setSepArquivo(null);
+    $('sep-url').value = texto;
+    atualizarSep();
+    $('sep-url').focus();
+    return;
+  }
+  if (state.modoMesa === 'criar') return;
   e.preventDefault();
   irPara('mesa');
   if (state.arquivo) $('btn-arquivo-tirar').click();
@@ -429,8 +439,8 @@ const VOZ_REGUAS = [
   { id: 'autotuneStrength', rot: 'Força do autotune', min: 0, max: 1, step: 0.1, def: 1, dep: 'autotune' },
   { id: 'proposedPitchThreshold', rot: 'Limiar do tom proposto', min: 50, max: 1199, step: 1, def: 155, dep: 'proposedPitch' },
   { id: 'cleanStrength', rot: 'Força da limpeza', min: 0, max: 1, step: 0.1, def: 0.5, dep: 'cleanAudio' },
-  { id: 'formantQfrency', rot: 'Formante: quefrência', min: 0, max: 16, step: 0.1, def: 1, dep: 'formant' },
-  { id: 'formantTimbre', rot: 'Formante: timbre', min: 0, max: 16, step: 0.1, def: 1, dep: 'formant' },
+  { id: 'formantQfrency', rot: 'Formante: quefrência', min: 0, max: 16, step: 0.01, def: 1, dep: 'formant' },
+  { id: 'formantTimbre', rot: 'Formante: timbre (menor = voz mais grossa)', min: 0, max: 16, step: 0.01, def: 1, dep: 'formant' },
 ];
 const VOZ_CHAVES = [
   // as quatro primeiras são passadas nossas, em volta do Applio; tom sozinho e instrumental acompanhando
@@ -487,9 +497,19 @@ function montarPainelVoz() {
   const reguas = $('vz-reguas');
   for (const r of VOZ_REGUAS) {
     const input = el('input', { type: 'range', id: 'vz-' + r.id, min: r.min, max: r.max, step: r.step, 'aria-label': r.rot });
-    const out = el('output', { id: 'vz-' + r.id + '-v' });
-    input.addEventListener('input', () => { out.textContent = lerRegua(r); });
+    // caixinha ao lado: mostra o valor e aceita digitar (vírgula ou ponto); o valor vai para a régua
+    const out = el('input', { type: 'text', inputmode: 'decimal', class: 'regua-num', id: 'vz-' + r.id + '-v', 'aria-label': r.rot + ' (digitar)' });
+    input.addEventListener('input', () => { out.value = lerRegua(r); });
     input.addEventListener('change', salvarVoz);
+    const digitado = () => {
+      const x = Number(out.value.replace(',', '.').replace('−', '-').replace('+', '').trim());
+      if (Number.isFinite(x) && out.value.trim()) input.value = Math.min(r.max, Math.max(r.min, x));
+      out.value = lerRegua(r);
+      salvarVoz();
+    };
+    out.addEventListener('change', digitado);
+    out.addEventListener('keydown', (e) => { if (e.key === 'Enter') out.blur(); });
+    out.addEventListener('focus', () => out.select());
     reguas.append(el('div', { class: 'regua', id: 'vz-' + r.id + '-linha' }, el('span', { class: 'etq', text: r.rot }), input, out));
   }
   const chaves = $('vz-chaves');
@@ -528,6 +548,7 @@ function dependenciasVoz() {
     const on = r.dep ? ligada : !ligada;
     $('vz-' + r.id + '-linha').classList.toggle('desligada', !on);
     $('vz-' + r.id).disabled = !on;
+    $('vz-' + r.id + '-v').disabled = !on;
   }
   const extra = $('vz-tomExtraLigado').getAttribute('aria-checked') === 'true';
   $('vz-tomExtra-linha').classList.toggle('desligada', !extra);
@@ -537,7 +558,7 @@ function preencherVoz(v) {
   const val = { ...VOZ_PADRAO, ...(v || {}) };
   for (const r of VOZ_REGUAS) {
     $('vz-' + r.id).value = val[r.id];
-    $('vz-' + r.id + '-v').textContent = lerRegua(r);
+    $('vz-' + r.id + '-v').value = lerRegua(r);
   }
   for (const c of VOZ_CHAVES) $('vz-' + c.id).setAttribute('aria-checked', String(!!val[c.id]));
   for (const id of Object.keys(VOZ_LISTAS)) $('vz-' + id).value = VOZ_LISTAS[id].includes(val[id]) ? val[id] : VOZ_PADRAO[id];
@@ -2031,6 +2052,18 @@ $('btn-pasta-saida').addEventListener('click', () => api.abrirPastaSaida());
 // ---------- separar vocal (avulso) ----------
 let sepArquivo = null;
 let sepModo = 'vocal';
+const sepTemOrigem = () => !!sepArquivo || !!$('sep-url').value.trim();
+function atualizarSep() {
+  $('sep-arquivo').hidden = !sepArquivo;
+  $('sep-arquivo-nome').textContent = sepArquivo ? nomeArquivo(sepArquivo) : '';
+  $('sep-url').disabled = !!sepArquivo;
+  $('btn-sep-ir').disabled = state.rodando || !sepTemOrigem();
+}
+function setSepArquivo(p) {
+  sepArquivo = p;
+  if (p) $('sep-url').value = '';
+  atualizarSep();
+}
 document.querySelectorAll('#sep-modo [data-sep]').forEach((b) => b.addEventListener('click', () => {
   if (state.rodando) return;
   sepModo = b.dataset.sep;
@@ -2038,14 +2071,22 @@ document.querySelectorAll('#sep-modo [data-sep]').forEach((b) => b.addEventListe
 }));
 $('btn-sep-arquivo').addEventListener('click', async () => {
   const p = await api.escolherAudio();
-  if (!p) return;
-  sepArquivo = p;
-  $('sep-arquivo').textContent = nomeArquivo(p);
-  $('btn-sep-ir').disabled = false;
+  if (p) setSepArquivo(p);
+});
+$('btn-sep-arquivo-tirar').addEventListener('click', () => setSepArquivo(null));
+$('sep-url').addEventListener('input', atualizarSep);
+$('sep-url').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !state.rodando && $('sep-url').value.trim()) { e.preventDefault(); $('btn-sep-ir').click(); }
 });
 $('btn-sep-parar').addEventListener('click', () => api.cancelar());
 $('btn-sep-ir').addEventListener('click', async () => {
   if (state.rodando) { $('sep-erro').hidden = false; $('sep-erro').textContent = 'Espere a gravação atual terminar.'; return; }
+  const origem = sepArquivo ? { file: sepArquivo } : { url: $('sep-url').value.trim() };
+  if (!origem.file && !origem.url) {
+    $('sep-erro').hidden = false;
+    $('sep-erro').textContent = 'Escolha um arquivo ou cole um link.';
+    return;
+  }
   $('sep-erro').hidden = true;
   $('sep-canais').replaceChildren();
   $('sep-barra').hidden = false;
@@ -2056,10 +2097,10 @@ $('btn-sep-ir').addEventListener('click', async () => {
   state.modo = 'sep';
   state.rodando = true;
   const porInstrumento = sepModo === 'instrumentos';
-  const r = porInstrumento ? await api.separarInstrumentos(sepArquivo) : await api.separarArquivo(sepArquivo);
+  const r = porInstrumento ? await api.separarInstrumentos(origem) : await api.separarArquivo(origem);
   state.rodando = false;
   state.modo = 'mesa';
-  $('btn-sep-ir').disabled = false;
+  atualizarSep();
   $('btn-sep-parar').hidden = true;
   $('sep-barra').hidden = true;
   $('sep-msg').textContent = '';

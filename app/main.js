@@ -257,8 +257,8 @@ ipcMain.handle('analisar', (_e, opts) => guarded((ctl) => pipeline.analyze(opts,
 ipcMain.handle('gerar', (_e, { dir, opts }) => guarded((ctl) => pipeline.generate(dir, opts, progresso, ctl)));
 ipcMain.handle('separar-variacao', (_e, { dir, index }) =>
   guarded((ctl) => pipeline.separateTake(dir, index, progresso, ctl)));
-ipcMain.handle('separar-arquivo', (_e, file) => guarded((ctl) => pipeline.separateOnly(file, progresso, ctl)));
-ipcMain.handle('separar-instrumentos', (_e, file) => guarded((ctl) => pipeline.separarInstrumentos(file, progresso, ctl)));
+ipcMain.handle('separar-arquivo', (_e, origem) => guarded((ctl) => pipeline.separateOnly(origem, progresso, ctl)));
+ipcMain.handle('separar-instrumentos', (_e, origem) => guarded((ctl) => pipeline.separarInstrumentos(origem, progresso, ctl)));
 ipcMain.handle('so-voz', (_e, opts) => guarded((ctl) => pipeline.soVoz(opts, progresso, ctl)));
 ipcMain.handle('falar', (_e, opts) => guarded((ctl) => pipeline.falar(opts, progresso, ctl)));
 // vozes do leitor local; a lista só é lida uma vez

@@ -299,14 +299,19 @@
 <main id="tab-separar" class="tela coluna" hidden>
   <section class="modulo estreito">
     <div class="mod-cab"><span class="etq">Separar vocal</span><span class="lamp" id="lamp-sep"></span></div>
-    <p class="texto">Separa qualquer música em faixas WAV. <b>Voz e instrumental</b> usa o mesmo modelo do UVR5 (MDX-Net Inst HQ 3). <b>Por instrumento</b> separa em voz, bateria, baixo, guitarra, piano e o resto (Demucs).</p>
+    <p class="texto">Separa qualquer música em faixas WAV. <b>Voz e instrumental</b> usa o mesmo modelo do UVR5 (MDX-Net Inst HQ 3). <b>Por instrumento</b> separa em voz, bateria, baixo, guitarra, piano e o resto (Demucs). Cole um link do YouTube ou escolha um arquivo do PC.</p>
     <div class="modos" id="sep-modo" role="tablist" style="margin-bottom:14px">
       <button class="modo on" data-sep="vocal" role="tab">Voz e instrumental</button>
       <button class="modo" data-sep="instrumentos" role="tab">Por instrumento (6 faixas)</button>
     </div>
+    <label class="etq rot" for="sep-url">Origem</label>
     <div class="linha">
-      <button class="tecla" id="btn-sep-arquivo">Escolher arquivo</button>
-      <span class="texto fraco" id="sep-arquivo">nenhum arquivo</span>
+      <input class="campo" id="sep-url" type="text" placeholder="link do YouTube…" spellcheck="false">
+      <button class="tecla" id="btn-sep-arquivo">Arquivo</button>
+    </div>
+    <div class="arquivo" id="sep-arquivo" hidden>
+      <span id="sep-arquivo-nome"></span>
+      <button class="x" id="btn-sep-arquivo-tirar" aria-label="Tirar arquivo">×</button>
     </div>
     <div class="linha" style="margin-top:14px">
       <button class="tecla forte" id="btn-sep-ir" disabled>Separar</button>

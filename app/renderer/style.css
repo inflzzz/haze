@@ -334,6 +334,8 @@ dialog.painel::backdrop { background: rgba(15, 13, 12, .72); }
 .regua { display: grid; grid-template-columns: 1fr 64px; gap: 6px 12px; align-items: center; }
 .regua .etq { grid-column: 1 / -1; }
 .regua output { font: 400 13px/1 var(--mono); color: var(--ambar); text-align: right; background: var(--sulco); border-radius: 3px; padding: 6px 7px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .6); }
+.regua input.regua-num { width: 100%; box-sizing: border-box; border: 0; outline: 0; font: 400 13px/1 var(--mono); color: var(--ambar); text-align: right; background: var(--sulco); border-radius: 3px; padding: 6px 7px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .6); cursor: text; }
+.regua input.regua-num:focus { box-shadow: inset 0 1px 3px rgba(0, 0, 0, .6), 0 0 0 1px var(--ambar); }
 .regua.desligada, #vz-tomExtra-linha.desligada { opacity: .38; }
 input[type=range] { appearance: none; width: 100%; height: 18px; background: none; margin: 0; cursor: ew-resize; }
 input[type=range]::-webkit-slider-runnable-track { height: 6px; background: var(--sulco); border-radius: 3px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .8); }
